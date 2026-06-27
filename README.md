@@ -1,2 +1,5 @@
 # zcolorizer
+
+port of pygments/ccze
+
 # created by MenkeTechnologies
