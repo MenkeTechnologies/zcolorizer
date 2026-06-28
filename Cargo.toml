@@ -1,0 +1,50 @@
+# Standalone crate (its own git submodule); not part of any host workspace.
+[workspace]
+
+[package]
+name = "zcolorizer"
+version = "0.2.1"
+edition = "2021"
+description = "Real-time log file colorizer (ccze/pygments port) — fully customizable regex→token rules, swappable themes, cyberpunk by default"
+authors = ["MenkeTechnologies"]
+license = "MIT"
+repository = "https://github.com/MenkeTechnologies/zcolorizer"
+homepage = "https://menketechnologies.github.io/zcolorizer/"
+documentation = "https://docs.rs/zcolorizer"
+readme = "README.md"
+keywords = ["log", "colorize", "ccze", "cyberpunk", "ansi"]
+categories = ["command-line-utilities", "text-processing"]
+# The vendored ccze C source (GPL) is a build-time reference only and is NOT
+# part of the published crate — the Rust port is original. Also drop dev-only files.
+exclude = ["/vendor", "/.gitmodules"]
+
+[lib]
+name = "zcolorizer"
+# rlib            — native use from Tauri hosts / sibling crates.
+# staticlib/cdylib — C ABI for non-Rust hosts (see include/zcolorizer.h, added later).
+crate-type = ["rlib", "staticlib", "cdylib"]
+
+[[bin]]
+name = "zcolorizer"
+path = "src/bin/zcolorizer.rs"
+
+[dependencies]
+# Foundational, vendorable, durable (see the meta durable-deps rule).
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+regex = "1"
+thiserror = "2"
+dirs = "6"
+once_cell = "1"
+
+# CLI binary only; the lib never depends on it.
+clap = { version = "4", features = ["derive"], optional = true }
+
+[features]
+default = ["cli"]
+cli = ["dep:clap"]
+
+[profile.release]
+lto = true
+strip = true
