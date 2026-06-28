@@ -35,7 +35,7 @@ pub struct Module {
 }
 
 impl Module {
-    fn new(name: &'static str, description: &'static str, rules: Vec<RuleDef>) -> Module {
+    pub(crate) fn new(name: &'static str, description: &'static str, rules: Vec<RuleDef>) -> Module {
         Module { name, description, rules }
     }
 }

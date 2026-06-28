@@ -288,16 +288,20 @@ fn process_reader<R: BufRead, W: Write>(
         io::copy(&mut reader, out)?;
         return Ok(());
     }
-    let mut line = String::new();
+    // Read raw bytes per line (not `read_line`, which errors on non-UTF-8 input
+    // such as binary log files). Decode lossily so arbitrary bytes never crash
+    // the colorizer — invalid sequences become U+FFFD, like `cat` of a binary.
+    let mut buf: Vec<u8> = Vec::new();
     loop {
-        line.clear();
-        let n = reader.read_line(&mut line)?;
+        buf.clear();
+        let n = reader.read_until(b'\n', &mut buf)?;
         if n == 0 {
             break;
         }
-        let had_nl = line.ends_with('\n');
-        let body = line.strip_suffix('\n').unwrap_or(&line);
-        out.write_all(colorizer.colorize_line(body).as_bytes())?;
+        let had_nl = buf.last() == Some(&b'\n');
+        let end = if had_nl { buf.len() - 1 } else { buf.len() };
+        let body = String::from_utf8_lossy(&buf[..end]);
+        out.write_all(colorizer.colorize_line(&body).as_bytes())?;
         if had_nl {
             out.write_all(b"\n")?;
         }

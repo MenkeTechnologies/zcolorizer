@@ -79,6 +79,15 @@ pub mod tokens {
     pub const PROXY_SWAPIN: &str = "proxy_swapin";
     pub const PROXY_SWAPOUT: &str = "proxy_swapout";
     pub const PROXY_RELEASE: &str = "proxy_release";
+
+    // --- tokens used by the modern format modules ---
+    pub const THREAD: &str = "thread"; // thread name/id (app logs)
+    pub const LEVEL: &str = "level"; // a generic level word when not error/warn/info/debug
+    pub const FACILITY: &str = "facility"; // logger/component/category name
+    pub const DURATION: &str = "duration"; // elapsed time (e.g. 12ms, 1.2s)
+    pub const LATENCY: &str = "latency"; // request latency
+    pub const HASH: &str = "hash"; // hashes, request ids, container ids
+    pub const JSON_KEY: &str = "json_key"; // a JSON/structured object key
 }
 
 /// A named token→style mapping. `base` is the fallback for any unlisted token
@@ -271,6 +280,14 @@ fn theme_from_palette(p: &Palette) -> Theme {
         (PROXY_SWAPIN, i(c1)),
         (PROXY_SWAPOUT, i(c4)),
         (PROXY_RELEASE, i(c2)),
+        // modern format tokens
+        (THREAD, i(c5)),
+        (LEVEL, bi(c4)),
+        (FACILITY, i(pl)),
+        (DURATION, i(c4)),
+        (LATENCY, i(c4)),
+        (HASH, i(c5)),
+        (JSON_KEY, i(c3)),
     ];
 
     Theme {
