@@ -190,16 +190,14 @@ mod tests {
 
     #[test]
     fn name_override_beats_config_theme() {
-        let mut c = Config::default();
-        c.theme = Some("cyberpunk".into());
+        let c = Config { theme: Some("cyberpunk".into()), ..Config::default() };
         let t = c.resolve_theme(Some("ccze-classic")).unwrap();
         assert_eq!(t.name, "ccze-classic");
     }
 
     #[test]
     fn extend_mode_appends_user_rules() {
-        let mut c = Config::default();
-        c.rules_mode = RulesMode::Extend;
+        let mut c = Config { rules_mode: RulesMode::Extend, ..Config::default() };
         c.rules.push(RuleDef::with_token("x", "FOO", "error"));
         let defs = c.resolve_rule_defs();
         assert!(defs.len() > 1);
@@ -217,8 +215,7 @@ mod tests {
 
     #[test]
     fn replace_mode_drops_builtins() {
-        let mut c = Config::default();
-        c.rules_mode = RulesMode::Replace;
+        let mut c = Config { rules_mode: RulesMode::Replace, ..Config::default() };
         c.rules.push(RuleDef::with_token("x", "FOO", "error"));
         let defs = c.resolve_rule_defs();
         assert_eq!(defs.len(), 1);

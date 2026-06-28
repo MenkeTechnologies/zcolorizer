@@ -20,8 +20,14 @@ use zcolorizer::Colorizer;
     version,
     about = "Real-time log colorizer — fully customizable rules, swappable themes (cyberpunk by default)",
     long_about = None,
+    // House-style cyberpunk help is rendered by `print_cyberpunk_help`, not clap.
+    disable_help_flag = true,
 )]
 struct Cli {
+    /// Print this help.
+    #[arg(short = 'h', long = "help")]
+    help: bool,
+
     /// Theme to use (overrides the config). See --list-themes.
     #[arg(short, long)]
     theme: Option<String>,
@@ -54,7 +60,7 @@ struct Cli {
     #[arg(long)]
     list_modules: bool,
 
-    /// Emit all resolved themes as JSON (for the zgui theme picker) and exit.
+    /// Emit all resolved themes as JSON (for tooling) and exit.
     #[arg(long)]
     themes_json: bool,
 
@@ -62,9 +68,81 @@ struct Cli {
     #[arg(long)]
     list_rules: bool,
 
-    /// Print the resolved config as TOML and exit (handy for `zgui` to read/write).
+    /// Print the resolved config as TOML and exit.
     #[arg(long)]
     dump_config: bool,
+}
+
+/// The ANSI-Shadow "ZCOLORIZER" wordmark (matches the README banner).
+const BANNER: &str = r#"███████╗ ██████╗ ██████╗ ██╗      ██████╗ ██████╗ ██╗███████╗███████╗██████╗
+╚══███╔╝██╔════╝██╔═══██╗██║     ██╔═══██╗██╔══██╗██║╚══███╔╝██╔════╝██╔══██╗
+  ███╔╝ ██║     ██║   ██║██║     ██║   ██║██████╔╝██║  ███╔╝ █████╗  ██████╔╝
+ ███╔╝  ██║     ██║   ██║██║     ██║   ██║██╔══██╗██║ ███╔╝  ██╔══╝  ██╔══██╗
+███████╗╚██████╗╚██████╔╝███████╗╚██████╔╝██║  ██║██║███████╗███████╗██║  ██║
+╚══════╝ ╚═════╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝  ╚═╝"#;
+
+/// Render the cyberpunk house-style `-h` help (banner + cyan section rules +
+/// green `//` descriptions), matching the rest of the MenkeTechnologies CLI suite.
+fn print_cyberpunk_help() {
+    let bin = env!("CARGO_BIN_NAME");
+    let version = env!("CARGO_PKG_VERSION");
+
+    const C: &str = "\x1b[36m"; // cyan — section rules
+    const M: &str = "\x1b[35m"; // magenta
+    const Y: &str = "\x1b[33m"; // yellow — USAGE
+    const G: &str = "\x1b[32m"; // green — `//` comment marker
+    const D: &str = "\x1b[2m"; // dim — footer
+    const N: &str = "\x1b[0m"; // reset
+
+    // Banner with a vertical cyan→magenta neon gradient (truecolor).
+    let lines: Vec<&str> = BANNER.lines().collect();
+    let last = (lines.len().saturating_sub(1)).max(1) as f32;
+    for (i, line) in lines.iter().enumerate() {
+        let t = i as f32 / last;
+        let r = (0.0 + t * 255.0) as u8;
+        let g = (229.0 - t * 186.0) as u8;
+        let b = (255.0 - t * 41.0) as u8;
+        println!("\x1b[1;38;2;{r};{g};{b}m{line}{N}");
+    }
+    println!();
+    println!("  {M}Real-time log colorizer{N} — ccze/pygments port · 31 cyberpunk themes · 20 modules");
+    println!();
+
+    println!("{Y}  USAGE:{N} {bin} [OPTIONS] [FILES]...        {G}//{N} reads stdin when no FILES");
+    println!("         tail -f /var/log/syslog | {bin} -m syslog");
+    println!();
+
+    let row = |flags: &str, desc: &str| println!("  {flags:<24}{G}//{N} {desc}");
+
+    println!("{C}  ── INPUT ─────────────────────────────────────────────{N}");
+    row("FILES...", "files to colorize (default: stdin, line-buffered)");
+    println!();
+
+    println!("{C}  ── THEME ─────────────────────────────────────────────{N}");
+    row("-t, --theme NAME", "theme to use (default: neon-sprawl, alias cyberpunk)");
+    row("    --list-themes", "list all themes (active marked with *)");
+    row("    --themes-json", "emit every theme as JSON (for tooling)");
+    println!();
+
+    println!("{C}  ── RULES & MODULES ───────────────────────────────────{N}");
+    row("-m, --module NAME", "enable a ccze format module (repeatable; `all`)");
+    row("    --list-modules", "list the 20 format modules");
+    row("    --list-rules", "list effective rules after config merge");
+    row("-c, --config PATH", "config file (default ~/.config/zcolorizer/config.toml)");
+    row("    --dump-config", "print the resolved config as TOML");
+    println!();
+
+    println!("{C}  ── OUTPUT ────────────────────────────────────────────{N}");
+    row("-C, --force-color", "color even when stdout is not a TTY");
+    row("    --no-color", "never color (passthrough)");
+    println!();
+
+    println!("{C}  ── INFO ──────────────────────────────────────────────{N}");
+    row("-h, --help", "print this help");
+    row("-V, --version", "print version");
+    println!();
+
+    println!("{D}  zcolorizer v{version} · MenkeTechnologies · cyberpunk by default{N}");
 }
 
 fn main() -> ExitCode {
@@ -79,6 +157,11 @@ fn main() -> ExitCode {
 }
 
 fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
+    if cli.help {
+        print_cyberpunk_help();
+        return Ok(ExitCode::SUCCESS);
+    }
+
     let mut config = match &cli.config {
         Some(p) => Config::load(p)?,
         None => Config::load_default()?,

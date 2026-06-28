@@ -478,9 +478,14 @@ fn ulogd() -> Module {
     Module::new(
         "ulogd",
         "Coloriser for ulogd sub-logs.",
-        // Capture each "FIELD=" name; values stay uncaptured for the generic rules
-        // (ip, mac, number, …).
-        vec![RuleDef::new("ulogd-field", r"(?P<field>[A-Za-z][A-Za-z0-9]*)=")],
+        // Color the netfilter LOG field NAMES before each '='; values stay
+        // uncaptured for the generic rules (ip, mac, number, …). Restricted to the
+        // known field set (rather than any `\w+=`) so enabling every module with
+        // `-m all` doesn't recolor arbitrary `key=value` text in unrelated logs.
+        vec![RuleDef::new(
+            r"ulogd-field",
+            r"\b(?P<field>IN|OUT|PHYSIN|PHYSOUT|MAC|SRC|DST|LEN|TOS|PREC|TTL|ID|PROTO|SPT|DPT|SEQ|ACK|WINDOW|RES|URGP|TYPE|CODE|MARK|GID|UID)=",
+        )],
     )
 }
 

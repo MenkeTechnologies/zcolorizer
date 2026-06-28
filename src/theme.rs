@@ -219,7 +219,9 @@ fn theme_from_palette(p: &Palette) -> Theme {
         (ERROR, bi(c2)),
         (WARNING, bi(c4)),
         (DEBUG, i(c5)),
-        (INFO, i(c1)),
+        // INFO leans on the same primary hue but bold, so it reads apart from the
+        // base text (which is also c1) instead of vanishing into it.
+        (INFO, bi(c1)),
         (GOOD, bi(c3)),
         (BAD, bi(c2)),
         (SYSTEM, i(c4)),
