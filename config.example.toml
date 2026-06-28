@@ -1,0 +1,92 @@
+# zcolorizer config — copy to $XDG_CONFIG_HOME/zcolorizer/config.toml
+# (usually ~/.config/zcolorizer/config.toml) and edit freely.
+#
+# Everything here is optional. Omit a section and the builtin defaults apply.
+# Three independent things you can control:
+#   1. which theme is active        (theme = "...")
+#   2. how colors map to tokens     ([[themes]])
+#   3. what text matches a token    ([[rules]])
+
+# ---------------------------------------------------------------------------
+# 1. Active theme. Any builtin (see `zcolorizer --list-themes`) or one you
+#    define below. Defaults to "cyberpunk".
+# ---------------------------------------------------------------------------
+theme = "cyberpunk"
+
+# How your [[rules]] combine with the builtin generic ruleset:
+#   "prepend" (default) yours first, then builtins      — yours win on overlap
+#   "extend"            builtins first, then yours      — builtins win on overlap
+#   "replace"           only yours, builtins dropped     — total control
+rules_mode = "prepend"
+
+# Format modules (ports of ccze's plugins) to enable. Each adds structured rules
+# for a specific log format; they sit between your [[rules]] and the generic
+# builtins. Use "all" to enable every module, or list specific ones. See
+# `zcolorizer --list-modules`. Equivalent to the CLI `-m/--module` flag.
+#   modules = ["syslog", "httpd", "squid"]
+#   modules = ["all"]
+modules = []
+
+# ---------------------------------------------------------------------------
+# 2. Theme override / definition.
+#    Giving the name of a builtin overlays just the tokens you set, keeping the
+#    rest. A new name defines a whole theme (set `base` so unlisted tokens have
+#    a color).
+#
+#    Color forms:
+#      "#ff00aa"            truecolor hex (24-bit)
+#      "red" / "bright_cyan" one of the 16 named ANSI colors
+#      { index = 213 }      256-color palette index
+#    Style flags: bold, dim, italic, underline, blink, reverse (all bool).
+# ---------------------------------------------------------------------------
+[[themes]]
+name = "cyberpunk"            # overlay the builtin cyberpunk theme
+description = "my tweaked cyberpunk"
+
+# make errors even louder
+[themes.styles.error]
+fg = "#ff003c"
+bold = true
+underline = true
+
+# tone PIDs down to a muted violet
+[themes.styles.pid]
+fg = "#b14bff"
+
+# An example of a brand-new theme defined from scratch:
+# [[themes]]
+# name = "matrix"
+# description = "green-on-black, Wachowski-core"
+# base = { fg = "#00aa00" }
+# [themes.styles.error]   = { fg = "#aaffaa", bold = true }
+# [themes.styles.date]    = { fg = "#33ff33", bold = true }
+# [themes.styles.host]    = { fg = "#66ff66" }
+
+# ---------------------------------------------------------------------------
+# 3. Custom rules. Each rule is a regex that tags text with a token.
+#    Two styles:
+#      - Named capture groups ARE the token: (?P<date>...) colors that group
+#        with the theme's `date` style. One regex can paint many fields.
+#      - No named groups: the whole match gets `token` (default "default").
+#    `ignore_case = true` adds (?i). Rules run top-to-bottom; first to claim a
+#    span of text wins, so put specific rules above generic ones.
+# ---------------------------------------------------------------------------
+
+# Highlight your service name wherever it appears.
+[[rules]]
+name = "my-service"
+pattern = '\bauth-gateway\b'
+token = "keyword"
+
+# A structured line for your app's own log format, painting several fields:
+#   [2026-06-27 14:00:00] LEVEL request_id=abc123 ...
+[[rules]]
+name = "app-request-id"
+pattern = 'request_id=(?P<keyword>[a-f0-9]+)'
+
+# Treat UUIDs as addresses (your token of choice).
+[[rules]]
+name = "uuid"
+pattern = '\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
+token = "address"
+ignore_case = true
