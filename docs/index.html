@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="zcolorizer — real-time log file colorizer in Rust. A port of ccze + the pygments regex→token idea: fully customizable rules, 31 swappable cyberpunk themes, 20 ccze format modules, streaming CLI.">
+  <meta name="description" content="zcolorizer — real-time log file colorizer in Rust. A port of ccze + the pygments regex→token idea: fully customizable rules, 31 swappable cyberpunk themes, 47 format modules, streaming CLI.">
   <title>zcolorizer — Documentation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,7 +98,7 @@
             <span class="sep">/</span>
             <a href="https://docs.rs/zcolorizer" target="_blank" rel="noopener noreferrer">docs.rs</a>
           </nav>
-          <p class="docs-build-line" id="zcolorizerBuildLine">zcolorizer v0.2.1 · ccze + pygments port · regex→token engine · 31 cyberpunk themes · 20 format modules · truecolor / 256 / named ANSI</p>
+          <p class="docs-build-line" id="zcolorizerBuildLine">zcolorizer v0.2.1 · ccze + pygments port · regex→token engine · 31 cyberpunk themes · 47 format modules · truecolor / 256 / named ANSI</p>
         </div>
         <div class="tutorial-toolbar">
           <button type="button" class="btn btn-secondary" id="btnTheme" title="Toggle light/dark">Theme</button>
@@ -119,7 +119,7 @@
 
     <main class="tutorial-main">
       <h2 class="tutorial-title"><span class="step-hash">&gt;_</span>ZCOLORIZER</h2>
-      <p class="tutorial-subtitle"><strong>Pipe logs in, get cyberpunk-colored logs out.</strong> A Rust port of <a href="https://github.com/cornet/ccze">ccze</a> and the pygments regex→token idea, built on three decoupled pieces: <strong>rules</strong> tag spans of a line with semantic tokens (<code>date</code>, <code>error</code>, <code>host</code>…), a <strong>theme</strong> maps each token to a color, and the <strong>engine</strong> paints the line. Fully customizable rules in TOML, 31 swappable themes, and all 20 ccze format modules — cyberpunk by default.</p>
+      <p class="tutorial-subtitle"><strong>Pipe logs in, get cyberpunk-colored logs out.</strong> A Rust port of <a href="https://github.com/cornet/ccze">ccze</a> and the pygments regex→token idea, built on three decoupled pieces: <strong>rules</strong> tag spans of a line with semantic tokens (<code>date</code>, <code>error</code>, <code>host</code>…), a <strong>theme</strong> maps each token to a color, and the <strong>engine</strong> paints the line. Fully customizable rules in TOML, 31 swappable themes, and all 47 format modules (20 classic ccze ports + 27 modern) — cyberpunk by default.</p>
 
       <section class="tutorial-section">
         <h2>Quickstart</h2>
@@ -193,7 +193,7 @@ zcolorizer -m all mixed.log      # every module; each only fires on matching lin
             <tr><td>apm · distcc · sulog · super · ulogd</td><td>power · distributed compile · su · privilege · netfilter</td></tr>
           </tbody>
         </table>
-        <p style="font-size:12px; opacity:0.8;">20 modules total — run <code>zcolorizer --list-modules</code>.</p>
+        <p style="font-size:12px; opacity:0.8;">47 modules total — run <code>zcolorizer --list-modules</code>.</p>
       </section>
 
       <section class="tutorial-section">
@@ -231,7 +231,7 @@ ignore_case = true</pre>
             <tr><td>-C, --force-color</td><td>color even when stdout is not a TTY</td></tr>
             <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--no-color</td><td>never color (passthrough)</td></tr>
             <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--list-themes</td><td>list all themes (active marked with <code>*</code>)</td></tr>
-            <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--list-modules</td><td>list the 20 format modules</td></tr>
+            <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--list-modules</td><td>list the 47 format modules</td></tr>
             <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--list-rules</td><td>list effective rules after config merge</td></tr>
             <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--themes-json</td><td>emit every theme as JSON (for tooling)</td></tr>
             <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;--dump-config</td><td>print the resolved config as TOML</td></tr>
