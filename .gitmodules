@@ -1,4 +1,0 @@
-[submodule "vendor/ccze"]
-	path = vendor/ccze
-	url = https://github.com/cornet/ccze.git
-	branch = master
