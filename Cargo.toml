@@ -3,7 +3,7 @@
 
 [package]
 name = "zcolorizer"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 description = "Real-time log file colorizer (ccze/pygments port) — fully customizable regex→token rules, swappable themes, cyberpunk by default"
 authors = ["MenkeTechnologies"]
