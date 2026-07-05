@@ -215,7 +215,7 @@ fn print_cyberpunk_help() {
     println!();
 
     println!("{C}  ── SYSTEM ────────────────────────────────────────────{N}");
-    println!("  {M}v{version} {N}// {Y}(c) Jacob Menke and contributors{N}");
+    println!("  {M}v{version} {N}// {Y}(c) MenkeTechnologies{N}");
     println!("  {M}Every log line. Every color. Full spectrum.{N}");
     println!("  {Y}>>> JACK IN. PIPE YOUR LOGS. PAINT THE STREAM. <<<{N}");
     println!(" {C}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░{N}");
