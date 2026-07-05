@@ -35,8 +35,16 @@ pub struct Module {
 }
 
 impl Module {
-    pub(crate) fn new(name: &'static str, description: &'static str, rules: Vec<RuleDef>) -> Module {
-        Module { name, description, rules }
+    pub(crate) fn new(
+        name: &'static str,
+        description: &'static str,
+        rules: Vec<RuleDef>,
+    ) -> Module {
+        Module {
+            name,
+            description,
+            rules,
+        }
     }
 }
 
@@ -96,7 +104,9 @@ pub fn detect(sample: &[String]) -> Vec<&'static str> {
 
 /// Look up a module by name (case-insensitive).
 pub fn get(name: &str) -> Option<Module> {
-    all().into_iter().find(|m| m.name.eq_ignore_ascii_case(name))
+    all()
+        .into_iter()
+        .find(|m| m.name.eq_ignore_ascii_case(name))
 }
 
 /// Resolve a list of requested module names into their rule defs, in order.
@@ -194,7 +204,10 @@ fn squid() -> Module {
                 r"^(?P<time>\d{9,10}\.\d{3})\s+(?P<gettime>\d+)\s(?P<host>\S+)\s\w+/(?P<http_code>\d{3})\s(?P<getsize>\d+)\s(?P<http_method>\w+)\s(?P<uri>\S+)\s(?P<ident>\S+)\s\w+/(?:[\d.]+|-)\s(?P<ctype>\S+)",
             ),
             // cache.log: YYYY/MM/DD HH:MM:SS| message
-            RuleDef::new("squid-cache", r"^(?P<date>\d{4}/\d{2}/\d{2}\s(?:\d{2}:){2}\d{2})\|"),
+            RuleDef::new(
+                "squid-cache",
+                r"^(?P<date>\d{4}/\d{2}/\d{2}\s(?:\d{2}:){2}\d{2})\|",
+            ),
             // Proxy action result codes (TCP_HIT, TCP_MISS, …) — dynamic color by substring.
             RuleDef::with_token("squid-hit", r"\b\w*HIT\w*\b", PROXY_HIT),
             RuleDef::with_token("squid-miss", r"\b\w*MISS\w*\b", PROXY_MISS),
@@ -269,12 +282,10 @@ fn postfix() -> Module {
     Module::new(
         "postfix",
         "Coloriser for postfix(1) sub-logs.",
-        vec![
-            RuleDef::new(
-                "postfix-line",
-                r"^(?P<unique>[\dA-F]+): (?P<field>client|to|message-id|uid|resent-message-id|from)=",
-            ),
-        ],
+        vec![RuleDef::new(
+            "postfix-line",
+            r"^(?P<unique>[\dA-F]+): (?P<field>client|to|message-id|uid|resent-message-id|from)=",
+        )],
     )
 }
 
@@ -315,7 +326,11 @@ fn procmail() -> Module {
                 r"^\s*(?P<field>>?From)\s(?P<email>\S+)\s+(?P<date>.*)$",
             )
             .ci(),
-            RuleDef::new("procmail-subject", r"^\s*(?P<field>Subject:)\s(?P<subject>\S+)").ci(),
+            RuleDef::new(
+                "procmail-subject",
+                r"^\s*(?P<field>Subject:)\s(?P<subject>\S+)",
+            )
+            .ci(),
             RuleDef::new(
                 "procmail-folder",
                 r"^\s*(?P<field>Folder:)\s(?P<dir>\S+)\s+(?P<size>.*)$",
@@ -348,12 +363,10 @@ fn vsftpd() -> Module {
     Module::new(
         "vsftpd",
         "Coloriser for vsftpd(8) logs.",
-        vec![
-            RuleDef::new(
-                "vsftpd-line",
-                r"^(?P<date>\S+\s+\S+\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2}\s+\d+)\s+\[pid (?P<pid>\d+)\]\s+(?:\[(?P<user>\S+)\])?\s*",
-            ),
-        ],
+        vec![RuleDef::new(
+            "vsftpd-line",
+            r"^(?P<date>\S+\s+\S+\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2}\s+\d+)\s+\[pid (?P<pid>\d+)\]\s+(?:\[(?P<user>\S+)\])?\s*",
+        )],
     )
 }
 
@@ -362,12 +375,10 @@ fn ftpstats() -> Module {
     Module::new(
         "ftpstats",
         "Coloriser for ftpstats (pure-ftpd) logs.",
-        vec![
-            RuleDef::new(
-                "ftpstats-line",
-                r"^(?P<date>\d{9,10})\s(?P<unique>[\da-f]+\.[\da-f]+)\s(?P<user>\S+)\s(?P<host>\S+)\s(?P<ftp_code>U|D)\s(?P<getsize>\d+)\s(?P<gettime>\d+)\s(?P<dir>.*)$",
-            ),
-        ],
+        vec![RuleDef::new(
+            "ftpstats-line",
+            r"^(?P<date>\d{9,10})\s(?P<unique>[\da-f]+\.[\da-f]+)\s(?P<user>\S+)\s(?P<host>\S+)\s(?P<ftp_code>U|D)\s(?P<getsize>\d+)\s(?P<gettime>\d+)\s(?P<dir>.*)$",
+        )],
     )
 }
 
@@ -376,12 +387,10 @@ fn xferlog() -> Module {
     Module::new(
         "xferlog",
         "Generic xferlog coloriser.",
-        vec![
-            RuleDef::new(
-                "xferlog-line",
-                r"^(?P<date>... ... +\d{1,2} +\d{1,2}:\d{1,2}:\d{1,2} \d+) (?P<gettime>\d+) (?P<host>[^ ]+) (?P<getsize>\d+) (?P<dir>\S+) (?P<bracket>a|b) (?P<ftp_code>C|U|T|_) (?:o|i) (?:a|g|r) (?P<user>[^ ]+) (?P<service>[^ ]+) (?:0|1) (?P<ident>[^ ]+) (?:c|i)",
-            ),
-        ],
+        vec![RuleDef::new(
+            "xferlog-line",
+            r"^(?P<date>... ... +\d{1,2} +\d{1,2}:\d{1,2}:\d{1,2} \d+) (?P<gettime>\d+) (?P<host>[^ ]+) (?P<getsize>\d+) (?P<dir>\S+) (?P<bracket>a|b) (?P<ftp_code>C|U|T|_) (?:o|i) (?:a|g|r) (?P<user>[^ ]+) (?P<service>[^ ]+) (?:0|1) (?P<ident>[^ ]+) (?:c|i)",
+        )],
     )
 }
 
@@ -393,7 +402,12 @@ fn php() -> Module {
         vec![
             RuleDef::new("php-line", r"^(?P<date>\[\d+-\w{3}-\d+ \d+:\d+:\d+\]) PHP "),
             RuleDef::with_token("php-keyword", r"\bPHP\b", "keyword"),
-            RuleDef::with_token("php-error", r"\b(?:fatal error|parse error|error)\b", "error").ci(),
+            RuleDef::with_token(
+                "php-error",
+                r"\b(?:fatal error|parse error|error)\b",
+                "error",
+            )
+            .ci(),
             RuleDef::with_token("php-warning", r"\bwarning\b", "warning").ci(),
             RuleDef::with_token("php-notice", r"\b(?:notice|deprecated)\b", "debug").ci(),
         ],
@@ -429,7 +443,11 @@ fn icecast() -> Module {
                 "icecast-line",
                 r"^(?P<date>\[\d+/\w{3}/\d+:\d+:\d+:\d+\]) (?:(?P<keyword>Admin) )?\[(?P<pid>\d*):?(?P<host>[^\]]*)\] ",
             ),
-            RuleDef::with_token("icecast-label", r"\b(?:Bandwidth|Sources|Clients|Admins):", "keyword"),
+            RuleDef::with_token(
+                "icecast-label",
+                r"\b(?:Bandwidth|Sources|Clients|Admins):",
+                "keyword",
+            ),
             RuleDef::with_token("icecast-date", r"\[\d+/\w{3}/\d+:\d+:\d+:\d+\]", "date"),
         ],
     )
@@ -440,12 +458,10 @@ fn fetchmail() -> Module {
     Module::new(
         "fetchmail",
         "Coloriser for fetchmail(1) sub-logs.",
-        vec![
-            RuleDef::new(
-                "fetchmail-line",
-                r"reading message (?P<email>[^@]*@[^:]*):(?P<number>\d+) of (?P<size>\d+)",
-            ),
-        ],
+        vec![RuleDef::new(
+            "fetchmail-line",
+            r"reading message (?P<email>[^@]*@[^:]*):(?P<number>\d+) of (?P<size>\d+)",
+        )],
     )
 }
 
@@ -573,7 +589,11 @@ mod tests {
         names.sort_unstable();
         let n = names.len();
         names.dedup();
-        assert_eq!(n, names.len(), "duplicate module name across legacy + modern");
+        assert_eq!(
+            n,
+            names.len(),
+            "duplicate module name across legacy + modern"
+        );
     }
 
     #[test]
@@ -604,12 +624,14 @@ mod tests {
     fn detect_finds_postgres_precisely() {
         // A start-anchored format should detect itself and not drag in unrelated
         // modules (the over-detection a loose signature would cause).
-        let sample = vec![
-            "2026-06-27 10:00:00.123 UTC [123] LOG:  database system is ready".to_string(),
-        ];
+        let sample =
+            vec!["2026-06-27 10:00:00.123 UTC [123] LOG:  database system is ready".to_string()];
         let got = detect(&sample);
         assert!(got.contains(&"postgres"), "postgres detected: {got:?}");
-        assert!(!got.contains(&"json"), "json must not false-positive: {got:?}");
+        assert!(
+            !got.contains(&"json"),
+            "json must not false-positive: {got:?}"
+        );
     }
 
     #[test]

@@ -86,7 +86,10 @@ impl Config {
             .or(self.theme.as_deref())
             .unwrap_or(crate::theme::DEFAULT_THEME);
 
-        let user = self.themes.iter().find(|t| t.name.eq_ignore_ascii_case(want));
+        let user = self
+            .themes
+            .iter()
+            .find(|t| t.name.eq_ignore_ascii_case(want));
         match crate::theme::builtin(want) {
             Some(base) => Ok(match user {
                 Some(u) => base.merged_with(u),
@@ -110,9 +113,7 @@ impl Config {
             let known: Vec<String> = self
                 .modules
                 .iter()
-                .filter(|n| {
-                    n.eq_ignore_ascii_case("all") || crate::modules::get(n).is_some()
-                })
+                .filter(|n| n.eq_ignore_ascii_case("all") || crate::modules::get(n).is_some())
                 .cloned()
                 .collect();
             crate::modules::resolve(&known).unwrap_or_default()
@@ -150,8 +151,10 @@ impl Config {
     /// Every theme name available to this config (builtins + user-defined), deduped,
     /// with builtins first. This is what a theme picker enumerates.
     pub fn available_theme_names(&self) -> Vec<String> {
-        let mut names: Vec<String> =
-            crate::theme::builtins().into_iter().map(|t| t.name).collect();
+        let mut names: Vec<String> = crate::theme::builtins()
+            .into_iter()
+            .map(|t| t.name)
+            .collect();
         for t in &self.themes {
             if !names.iter().any(|n| n.eq_ignore_ascii_case(&t.name)) {
                 names.push(t.name.clone());
@@ -175,7 +178,10 @@ mod tests {
     #[test]
     fn cyberpunk_alias_still_works() {
         let c = Config::default();
-        assert_eq!(c.resolve_theme(Some("cyberpunk")).unwrap().name, "neon-sprawl");
+        assert_eq!(
+            c.resolve_theme(Some("cyberpunk")).unwrap().name,
+            "neon-sprawl"
+        );
     }
 
     #[test]
@@ -185,19 +191,28 @@ mod tests {
         let defs = c.resolve_rule_defs();
         let syslog_idx = defs.iter().position(|d| d.name == "syslog-line").unwrap();
         let number_idx = defs.iter().position(|d| d.name == "number").unwrap();
-        assert!(syslog_idx < number_idx, "module rule must precede generic number rule");
+        assert!(
+            syslog_idx < number_idx,
+            "module rule must precede generic number rule"
+        );
     }
 
     #[test]
     fn name_override_beats_config_theme() {
-        let c = Config { theme: Some("cyberpunk".into()), ..Config::default() };
+        let c = Config {
+            theme: Some("cyberpunk".into()),
+            ..Config::default()
+        };
         let t = c.resolve_theme(Some("ccze-classic")).unwrap();
         assert_eq!(t.name, "ccze-classic");
     }
 
     #[test]
     fn extend_mode_appends_user_rules() {
-        let mut c = Config { rules_mode: RulesMode::Extend, ..Config::default() };
+        let mut c = Config {
+            rules_mode: RulesMode::Extend,
+            ..Config::default()
+        };
         c.rules.push(RuleDef::with_token("x", "FOO", "error"));
         let defs = c.resolve_rule_defs();
         assert!(defs.len() > 1);
@@ -215,7 +230,10 @@ mod tests {
 
     #[test]
     fn replace_mode_drops_builtins() {
-        let mut c = Config { rules_mode: RulesMode::Replace, ..Config::default() };
+        let mut c = Config {
+            rules_mode: RulesMode::Replace,
+            ..Config::default()
+        };
         c.rules.push(RuleDef::with_token("x", "FOO", "error"));
         let defs = c.resolve_rule_defs();
         assert_eq!(defs.len(), 1);
@@ -251,7 +269,10 @@ mod tests {
         let mut c = Config::default();
         let builtin_count = c.available_theme_names().len();
         assert_eq!(builtin_count, 32, "31 palettes + ccze-classic");
-        assert_eq!(c.available_theme_names().first().unwrap(), crate::theme::DEFAULT_THEME);
+        assert_eq!(
+            c.available_theme_names().first().unwrap(),
+            crate::theme::DEFAULT_THEME
+        );
 
         // A user theme with a fresh name is appended; one that shadows a builtin
         // (case-insensitively) does not grow the list.
@@ -268,7 +289,11 @@ mod tests {
             styles: Default::default(),
         });
         let names = c.available_theme_names();
-        assert_eq!(names.len(), builtin_count + 1, "only the fresh name was added");
+        assert_eq!(
+            names.len(),
+            builtin_count + 1,
+            "only the fresh name was added"
+        );
         assert!(names.iter().any(|n| n == "My Custom"));
     }
 
@@ -318,7 +343,10 @@ fg = { rgb = [1, 2, 3] }
 
     #[test]
     fn extend_mode_orders_modules_then_generic_then_user() {
-        let mut c = Config { rules_mode: RulesMode::Extend, ..Config::default() };
+        let mut c = Config {
+            rules_mode: RulesMode::Extend,
+            ..Config::default()
+        };
         c.modules.push("syslog".into());
         c.rules.push(RuleDef::with_token("user-x", "FOO", "error"));
         let defs = c.resolve_rule_defs();
@@ -337,8 +365,8 @@ fg = { rgb = [1, 2, 3] }
 
     #[test]
     fn load_reads_and_parses_a_file() {
-        let path = std::env::temp_dir()
-            .join(format!("zcolorizer-load-{}.toml", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("zcolorizer-load-{}.toml", std::process::id()));
         std::fs::write(&path, "theme = \"ccze-classic\"\n").unwrap();
         let loaded = Config::load(&path);
         let _ = std::fs::remove_file(&path);
@@ -356,7 +384,10 @@ fg = "#123456"
 "##;
         let c = Config::parse(toml, Path::new("test")).unwrap();
         let t = c.resolve_theme(None).unwrap();
-        assert_eq!(t.style("error").fg, Some(crate::color::Color::hex("#123456")));
+        assert_eq!(
+            t.style("error").fg,
+            Some(crate::color::Color::hex("#123456"))
+        );
         // a non-overridden token still has its builtin value
         assert!(t.style("good").fg.is_some());
     }

@@ -26,7 +26,10 @@ fn tagging_colorizer(modules: &[&str]) -> TagCz {
     // span walk via the public API is overkill — instead we assert on the ANSI
     // output containing the right indexed color for a token in the active theme.
     let theme = config.resolve_theme(None).expect("theme");
-    TagCz { cz: Colorizer::new(rules, theme.clone()), theme }
+    TagCz {
+        cz: Colorizer::new(rules, theme.clone()),
+        theme,
+    }
 }
 
 struct TagCz {
@@ -88,14 +91,20 @@ fn ulogd_restricted_to_known_fields() {
     let line = "IN=eth0 OUT= MAC=00:11:22:33:44:55 SRC=10.0.0.1 PROTO=TCP DPT=80";
     assert!(t.painted_as(line, "SRC", "field"), "SRC is a known field");
     // A non-netfilter key= must NOT be colored as a field (guards `-m all` safety).
-    assert!(!t.painted_as("hello banana=3", "banana", "field"), "arbitrary key not a field");
+    assert!(
+        !t.painted_as("hello banana=3", "banana", "field"),
+        "arbitrary key not a field"
+    );
 }
 
 #[test]
 fn theme_swap_changes_color_not_structure() {
     // The same line under two themes paints the host span, just in different colors.
     let line = "Jun 27 14:03:11 webhost x: hi";
-    let config = Config { modules: vec!["syslog".into()], ..Config::default() };
+    let config = Config {
+        modules: vec!["syslog".into()],
+        ..Config::default()
+    };
 
     let neon = Colorizer::from_config(&config, Some("neon-sprawl")).unwrap();
     let synth = Colorizer::from_config(&config, Some("synth-wave")).unwrap();
@@ -159,15 +168,24 @@ fn postfix_queue_line() {
 fn exim_message_id_and_date() {
     let t = tagging_colorizer(&["exim"]);
     let line = "2026-06-27 14:03:11 1a2b3c-4d5e6f-7g <= sender@example.com U=alice";
-    assert!(t.painted_as(line, "1a2b3c-4d5e6f-7g", "unique"), "16-char message id");
-    assert!(t.painted_as(line, "2026-06-27 14:03:11", "date"), "date prefix");
+    assert!(
+        t.painted_as(line, "1a2b3c-4d5e6f-7g", "unique"),
+        "16-char message id"
+    );
+    assert!(
+        t.painted_as(line, "2026-06-27 14:03:11", "date"),
+        "date prefix"
+    );
 }
 
 #[test]
 fn php_error_log_line() {
     let t = tagging_colorizer(&["php"]);
     let line = "[27-Jun-2026 14:03:11] PHP Warning: undefined variable $x";
-    assert!(t.painted_as(line, "[27-Jun-2026 14:03:11]", "date"), "bracketed date");
+    assert!(
+        t.painted_as(line, "[27-Jun-2026 14:03:11]", "date"),
+        "bracketed date"
+    );
     assert!(t.painted_as(line, "PHP", "keyword"), "PHP keyword");
     assert!(t.painted_as(line, "Warning", "warning"), "warning level");
 }
@@ -202,12 +220,18 @@ token = "error"
     // ERROR is no longer specially colored — it falls in the base style, so the
     // bold error escape must be absent from that span.
     let err_chunk = format!("{}ERROR{}", theme.style("error").prefix(), Style::RESET);
-    assert!(!out.contains(&err_chunk), "builtins dropped in replace mode");
+    assert!(
+        !out.contains(&err_chunk),
+        "builtins dropped in replace mode"
+    );
 }
 
 #[test]
 fn multiline_text_colorizes_each_line() {
-    let config = Config { modules: vec!["syslog".into()], ..Config::default() };
+    let config = Config {
+        modules: vec!["syslog".into()],
+        ..Config::default()
+    };
     let cz = Colorizer::from_config(&config, None).unwrap();
     let text = "Jun 27 14:03:11 host a: hi\nJun 27 14:03:12 host b: bye\n";
     let out = cz.colorize_text(text);

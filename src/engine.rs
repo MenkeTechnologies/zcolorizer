@@ -74,7 +74,13 @@ impl Colorizer {
                 }
             } else {
                 for m in rule.regex.find_iter(line) {
-                    claim(&mut owner, &mut token_names, m.start(), m.end(), &rule.whole_token);
+                    claim(
+                        &mut owner,
+                        &mut token_names,
+                        m.start(),
+                        m.end(),
+                        &rule.whole_token,
+                    );
                 }
             }
         }
@@ -97,7 +103,11 @@ impl Colorizer {
             while j < n && owner[j] == cur {
                 j += 1;
             }
-            let style = if cur == usize::MAX { default_style } else { styles[cur] };
+            let style = if cur == usize::MAX {
+                default_style
+            } else {
+                styles[cur]
+            };
             // Slices land on char boundaries because all span ends come from regex
             // match offsets, which are always UTF-8 boundaries.
             out.push_str(&style.paint(&line[i..j]));
@@ -268,7 +278,11 @@ mod tests {
         // Note: the output *does* contain `\x1b` — that's our own SGR styling.
         // What must never leak are the raw binary bytes from the input.
         for junk in ['\u{0}', '\u{7}', '\u{7f}', '\u{99}'] {
-            assert!(!out.contains(junk), "control char {:#x} leaked", junk as u32);
+            assert!(
+                !out.contains(junk),
+                "control char {:#x} leaked",
+                junk as u32
+            );
         }
     }
 
@@ -386,7 +400,10 @@ mod tests {
         let err = cz.theme().style("error");
         let info = cz.theme().style("info");
         assert!(out.contains(&err.paint("abc")), "first rule owns abc");
-        assert!(out.contains(&info.paint("d")), "second rule paints only the tail d");
+        assert!(
+            out.contains(&info.paint("d")),
+            "second rule paints only the tail d"
+        );
     }
 
     #[test]

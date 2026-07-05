@@ -140,27 +140,60 @@ fn print_cyberpunk_help() {
     let row = |flags: &str, desc: &str| println!("  {flags:<24}{G}//{N} {desc}");
 
     println!("{C}  ── INPUT ─────────────────────────────────────────────{N}");
-    row("FILES...", "files to colorize (default: stdin, line-buffered)");
+    row(
+        "FILES...",
+        "files to colorize (default: stdin, line-buffered)",
+    );
     println!();
 
     println!("{C}  ── THEME ─────────────────────────────────────────────{N}");
-    row("-t, --theme NAME", "theme to use (default: neon-sprawl, alias cyberpunk)");
-    row("    --list-themes", "list all themes (active marked with *)");
-    row("    --themes-json", "emit every theme as JSON (for tooling)");
+    row(
+        "-t, --theme NAME",
+        "theme to use (default: neon-sprawl, alias cyberpunk)",
+    );
+    row(
+        "    --list-themes",
+        "list all themes (active marked with *)",
+    );
+    row(
+        "    --themes-json",
+        "emit every theme as JSON (for tooling)",
+    );
     println!();
 
     println!("{C}  ── RULES & MODULES ───────────────────────────────────{N}");
-    row("-m, --module NAME", "enable a format module (repeatable; `all`, `auto`)");
-    row("    --list-modules", &format!("list the {module_count} format modules"));
-    row("    --list-rules", "list effective rules after config merge");
-    row("-c, --config PATH", "config file (default ~/.config/zcolorizer/config.toml)");
-    row("-w, --watch", "reload config/theme live when the file changes");
+    row(
+        "-m, --module NAME",
+        "enable a format module (repeatable; `all`, `auto`)",
+    );
+    row(
+        "    --list-modules",
+        &format!("list the {module_count} format modules"),
+    );
+    row(
+        "    --list-rules",
+        "list effective rules after config merge",
+    );
+    row(
+        "-c, --config PATH",
+        "config file (default ~/.config/zcolorizer/config.toml)",
+    );
+    row(
+        "-w, --watch",
+        "reload config/theme live when the file changes",
+    );
     row("    --dump-config", "print the resolved config as TOML");
     println!();
 
     println!("{C}  ── OUTPUT ────────────────────────────────────────────{N}");
-    row("-g, --grep REGEX", "show only matching lines (still colorized)");
-    row("-H, --highlight REGEX", "spotlight: dim the lines that don't match");
+    row(
+        "-g, --grep REGEX",
+        "show only matching lines (still colorized)",
+    );
+    row(
+        "-H, --highlight REGEX",
+        "spotlight: dim the lines that don't match",
+    );
     row("-C, --force-color", "color even when stdout is not a TTY");
     row("    --no-color", "never color (passthrough)");
     println!();
@@ -198,12 +231,21 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
     // `auto` is a meta-module: it means "sniff the input and enable the formats
     // actually present". It can't be resolved here (we haven't read input yet),
     // so pull it out of the real module lists and remember it.
-    let auto = cli.modules.iter().chain(config.modules.iter()).any(|m| is_auto(m));
+    let auto = cli
+        .modules
+        .iter()
+        .chain(config.modules.iter())
+        .any(|m| is_auto(m));
     config.modules.retain(|m| !is_auto(m));
 
     // Modules requested on the CLI (minus `auto`). Kept separately so `--watch`
     // can re-apply them on top of a freshly-loaded config after each reload.
-    let cli_modules: Vec<String> = cli.modules.iter().filter(|m| !is_auto(m)).cloned().collect();
+    let cli_modules: Vec<String> = cli
+        .modules
+        .iter()
+        .filter(|m| !is_auto(m))
+        .cloned()
+        .collect();
 
     // Merge CLI-requested modules into the config (dedup, preserve order).
     for m in &cli_modules {
@@ -281,7 +323,8 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
     if auto {
         let detected: Vec<String> = if cli.files.is_empty() {
             let mut reader = BufReader::new(io::stdin().lock());
-            sniffed = sniff_reader(&mut reader, SNIFF_LINES).map_err(|e| sniff_err("<stdin>", e))?;
+            sniffed =
+                sniff_reader(&mut reader, SNIFF_LINES).map_err(|e| sniff_err("<stdin>", e))?;
             let lines: Vec<String> = sniffed.iter().map(|r| line_body(r).into_owned()).collect();
             stdin_reader = Some(reader);
             detect_names(&lines)
@@ -290,7 +333,11 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
         };
         eprintln!(
             "zcolorizer: -m auto detected: {}",
-            if detected.is_empty() { "(none)".to_string() } else { detected.join(", ") }
+            if detected.is_empty() {
+                "(none)".to_string()
+            } else {
+                detected.join(", ")
+            }
         );
         for d in detected {
             if !config.modules.iter().any(|x| x.eq_ignore_ascii_case(&d)) {
@@ -330,7 +377,13 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
         None
     };
 
-    let mut session = Session { colorizer, want_color, grep, highlight, reload };
+    let mut session = Session {
+        colorizer,
+        want_color,
+        grep,
+        highlight,
+        reload,
+    };
 
     let stdout = io::stdout();
     let mut out = io::BufWriter::new(stdout.lock());
@@ -378,12 +431,18 @@ fn is_auto(name: &str) -> bool {
 
 /// Run format detection and own the resulting names as `String`s.
 fn detect_names(sample: &[String]) -> Vec<String> {
-    zcolorizer::modules::detect(sample).iter().map(|s| s.to_string()).collect()
+    zcolorizer::modules::detect(sample)
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
 }
 
 /// Wrap an I/O error from the `-m auto` sniff phase as a crate error.
 fn sniff_err(what: &str, source: io::Error) -> zcolorizer::Error {
-    zcolorizer::Error::Io { path: PathBuf::from(what), source }
+    zcolorizer::Error::Io {
+        path: PathBuf::from(what),
+        source,
+    }
 }
 
 /// Compile a `--grep`/`--highlight` pattern, surfacing a bad regex with the flag
@@ -392,7 +451,10 @@ fn compile_filter(flag: &str, pat: Option<&str>) -> zcolorizer::Result<Option<Re
     match pat {
         Some(p) => Regex::new(p)
             .map(Some)
-            .map_err(|source| zcolorizer::Error::BadRule { name: flag.to_string(), source }),
+            .map_err(|source| zcolorizer::Error::BadRule {
+                name: flag.to_string(),
+                source,
+            }),
         None => Ok(None),
     }
 }
@@ -400,7 +462,11 @@ fn compile_filter(flag: &str, pat: Option<&str>) -> zcolorizer::Result<Option<Re
 /// The body of a raw line buffer (its bytes minus a trailing `\n`), decoded
 /// lossily so non-UTF-8 input never crashes the colorizer.
 fn line_body(raw: &[u8]) -> std::borrow::Cow<'_, str> {
-    let end = if raw.last() == Some(&b'\n') { raw.len() - 1 } else { raw.len() };
+    let end = if raw.last() == Some(&b'\n') {
+        raw.len() - 1
+    } else {
+        raw.len()
+    };
     String::from_utf8_lossy(&raw[..end])
 }
 
@@ -426,7 +492,9 @@ fn sniff_files(files: &[PathBuf], max: usize) -> io::Result<Vec<String>> {
         if lines.len() >= max {
             break;
         }
-        let Ok(f) = std::fs::File::open(path) else { continue };
+        let Ok(f) = std::fs::File::open(path) else {
+            continue;
+        };
         let mut reader = BufReader::new(f);
         while lines.len() < max {
             let mut buf = Vec::new();
@@ -452,7 +520,13 @@ struct Reloader {
 impl Reloader {
     fn new(path: PathBuf, theme: Option<String>, modules: Vec<String>) -> Reloader {
         let last_mtime = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
-        Reloader { path, theme, modules, last_mtime, last_check: Instant::now() }
+        Reloader {
+            path,
+            theme,
+            modules,
+            last_mtime,
+            last_check: Instant::now(),
+        }
     }
 }
 
@@ -463,7 +537,11 @@ fn build_colorizer(
     theme: Option<&str>,
     modules: &[String],
 ) -> zcolorizer::Result<Colorizer> {
-    let mut config = if path.exists() { Config::load(path)? } else { Config::default() };
+    let mut config = if path.exists() {
+        Config::load(path)?
+    } else {
+        Config::default()
+    };
     for m in modules {
         if !config.modules.iter().any(|x| x.eq_ignore_ascii_case(m)) {
             config.modules.push(m.clone());
@@ -487,7 +565,9 @@ impl Session {
     /// the colorizer when its mtime changed. A failed reload keeps the previous
     /// colorizer (so a half-saved config doesn't kill the stream).
     fn maybe_reload(&mut self) {
-        let Some(rl) = self.reload.as_mut() else { return };
+        let Some(rl) = self.reload.as_mut() else {
+            return;
+        };
         if rl.last_check.elapsed() < RELOAD_THROTTLE {
             return;
         }
@@ -514,8 +594,7 @@ impl Session {
                 return Ok(());
             }
         }
-        let dim = self.want_color
-            && self.highlight.as_ref().is_some_and(|h| !h.is_match(body));
+        let dim = self.want_color && self.highlight.as_ref().is_some_and(|h| !h.is_match(body));
         if dim {
             // Context line: render it dim and uncolored so matches stand out.
             out.write_all(b"\x1b[2m")?;

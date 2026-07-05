@@ -81,7 +81,10 @@ fn json() -> Module {
             RuleDef::new("json-true", r"(?P<good>\btrue\b)"),
             RuleDef::new("json-false", r"(?P<bad>\bfalse\b)"),
             RuleDef::new("json-null", r"(?P<unknown>\bnull\b)"),
-            RuleDef::new("json-number", r":\s*(?P<number>-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)"),
+            RuleDef::new(
+                "json-number",
+                r":\s*(?P<number>-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)",
+            ),
             RuleDef::new("json-string-value", r#":\s*(?P<string>"(?:[^"\\]|\\.)*")"#),
         ],
     )
@@ -94,14 +97,26 @@ fn logfmt() -> Module {
         "logfmt key=value structured logs (Go kit/log, Heroku, Grafana)",
         vec![
             RuleDef::new("logfmt-date", r"=(?P<date>\d{4}-\d{2}-\d{2}T[0-9:.+\-Z]+)"),
-            RuleDef::new("logfmt-duration", r"=(?P<duration>\d+(?:\.\d+)?(?:ns|us|µs|ms|s|m|h))\b"),
+            RuleDef::new(
+                "logfmt-duration",
+                r"=(?P<duration>\d+(?:\.\d+)?(?:ns|us|µs|ms|s|m|h))\b",
+            ),
             RuleDef::new(
                 "logfmt-level-error",
                 r"(?:level|lvl|severity)=(?P<error>(?i:error|err|fatal|crit|critical|alert|emerg|emergency|panic))\b",
             ),
-            RuleDef::new("logfmt-level-warning", r"(?:level|lvl|severity)=(?P<warning>(?i:warn|warning))\b"),
-            RuleDef::new("logfmt-level-info", r"(?:level|lvl|severity)=(?P<info>(?i:info|notice|log))\b"),
-            RuleDef::new("logfmt-level-debug", r"(?:level|lvl|severity)=(?P<debug>(?i:debug|trace|fine))\b"),
+            RuleDef::new(
+                "logfmt-level-warning",
+                r"(?:level|lvl|severity)=(?P<warning>(?i:warn|warning))\b",
+            ),
+            RuleDef::new(
+                "logfmt-level-info",
+                r"(?:level|lvl|severity)=(?P<info>(?i:info|notice|log))\b",
+            ),
+            RuleDef::new(
+                "logfmt-level-debug",
+                r"(?:level|lvl|severity)=(?P<debug>(?i:debug|trace|fine))\b",
+            ),
             RuleDef::new("logfmt-string-value", r#"=(?P<string>"(?:[^"\\]|\\.)*")"#),
             RuleDef::new("logfmt-number", r"=(?P<number>-?\d+(?:\.\d+)?)\b"),
             RuleDef::new("logfmt-key", r"(?P<field>[A-Za-z_][\w.\-]*)="),
@@ -145,13 +160,32 @@ fn authlog() -> Module {
                 "authlog-line",
                 r"^(?P<date>\w{3}\s{1,2}\d{1,2}\s\d\d:\d\d:\d\d)\s(?P<host>\S+)\s(?P<process>[\w./-]+)(?:\[(?P<pid>\d+)\])?:",
             ),
-            RuleDef::new("authlog-for-user", r"\bfor (?:invalid user |illegal user )?(?P<user>\S+) from\b"),
+            RuleDef::new(
+                "authlog-for-user",
+                r"\bfor (?:invalid user |illegal user )?(?P<user>\S+) from\b",
+            ),
             RuleDef::new("authlog-pam-user", r"\bfor user (?P<user>\S+)\b"),
             RuleDef::new("authlog-sudo-user", r"\bUSER=(?P<user>\S+)\b"),
-            RuleDef::with_token("authlog-ok", r"\b(?:Accepted (?:password|publickey|keyboard-interactive(?:/pam)?|gssapi-with-mic)|session opened|New session)\b", "good"),
-            RuleDef::with_token("authlog-info", r"\b(?:session closed|Disconnected from|Connection closed by|Removed session)\b", "info"),
-            RuleDef::with_token("authlog-bad", r"(?:Failed password|Failed publickey|authentication failure|Invalid user|Illegal user|Connection reset by|maximum authentication attempts exceeded|not allowed because|Did not receive identification string|Bad protocol version identification|POSSIBLE BREAK-IN ATTEMPT|Too many authentication failures)", "bad"),
-            RuleDef::with_token("authlog-sudo-fail", r"(?:incorrect password attempts|authentication failure;|user NOT in sudoers|command not allowed)", "error"),
+            RuleDef::with_token(
+                "authlog-ok",
+                r"\b(?:Accepted (?:password|publickey|keyboard-interactive(?:/pam)?|gssapi-with-mic)|session opened|New session)\b",
+                "good",
+            ),
+            RuleDef::with_token(
+                "authlog-info",
+                r"\b(?:session closed|Disconnected from|Connection closed by|Removed session)\b",
+                "info",
+            ),
+            RuleDef::with_token(
+                "authlog-bad",
+                r"(?:Failed password|Failed publickey|authentication failure|Invalid user|Illegal user|Connection reset by|maximum authentication attempts exceeded|not allowed because|Did not receive identification string|Bad protocol version identification|POSSIBLE BREAK-IN ATTEMPT|Too many authentication failures)",
+                "bad",
+            ),
+            RuleDef::with_token(
+                "authlog-sudo-fail",
+                r"(?:incorrect password attempts|authentication failure;|user NOT in sudoers|command not allowed)",
+                "error",
+            ),
         ],
     )
 }
@@ -187,7 +221,11 @@ fn cron() -> Module {
                 "cron-action",
                 r"\((?P<user>[\w.-]+)\)\s(?P<keyword>CMD|MAIL|RELOAD|LIST|FINISHED|INFO|REPLACE|DELETE|STARTUP|WRONG|ERROR|BAD)\b",
             ),
-            RuleDef::with_token("cron-error", r"(?:ERROR|BAD FILE MODE|cannot|No MTA installed|Permission denied|unable to|orphan|bad minute|bad hour)", "error"),
+            RuleDef::with_token(
+                "cron-error",
+                r"(?:ERROR|BAD FILE MODE|cannot|No MTA installed|Permission denied|unable to|orphan|bad minute|bad hour)",
+                "error",
+            ),
         ],
     )
 }
@@ -202,8 +240,16 @@ fn auditd() -> Module {
                 "auditd-header",
                 r"^type=(?P<keyword>\w+)\smsg=audit\((?P<time>\d+\.\d+):(?P<number>\d+)\):",
             ),
-            RuleDef::with_token("auditd-ok", r"\b(?:success=yes|res=success|result=Success)\b", "good"),
-            RuleDef::with_token("auditd-fail", r"\b(?:success=no|res=failed|result=Failed)\b", "bad"),
+            RuleDef::with_token(
+                "auditd-ok",
+                r"\b(?:success=yes|res=success|result=Success)\b",
+                "good",
+            ),
+            RuleDef::with_token(
+                "auditd-fail",
+                r"\b(?:success=no|res=failed|result=Failed)\b",
+                "bad",
+            ),
             RuleDef::with_token("auditd-strval", r#""[^"]*""#, "string"),
             RuleDef::new("auditd-key", r"\b(?P<field>\w+)="),
         ],
@@ -228,7 +274,11 @@ fn nginx() -> Module {
                 "nginx-error",
                 r"^(?P<date>\d{4}/\d\d/\d\d)\s+(?P<time>\d\d:\d\d:\d\d)\s+\[(?:debug|info|notice|warn|error|crit|alert|emerg)\]\s+(?P<pid>\d+)#(?P<thread>\d+):(?:\s+\*(?P<unique>\d+))?",
             ),
-            RuleDef::with_token("nginx-lvl-error", r"\[(?:emerg|alert|crit|error)\]", "error"),
+            RuleDef::with_token(
+                "nginx-lvl-error",
+                r"\[(?:emerg|alert|crit|error)\]",
+                "error",
+            ),
             RuleDef::with_token("nginx-lvl-warn", r"\[warn\]", "warning"),
             RuleDef::with_token("nginx-lvl-info", r"\[(?:notice|info)\]", "info"),
             RuleDef::with_token("nginx-lvl-debug", r"\[debug\]", "debug"),
@@ -260,7 +310,11 @@ fn caddy() -> Module {
         "caddy",
         "Coloriser for Caddy v2 default JSON access logs",
         vec![
-            RuleDef::with_token("caddy-lvl-error", r#""level"\s*:\s*"(?:error|fatal|panic)""#, "error"),
+            RuleDef::with_token(
+                "caddy-lvl-error",
+                r#""level"\s*:\s*"(?:error|fatal|panic)""#,
+                "error",
+            ),
             RuleDef::with_token("caddy-lvl-warn", r#""level"\s*:\s*"warn""#, "warning"),
             RuleDef::with_token("caddy-lvl-info", r#""level"\s*:\s*"info""#, "info"),
             RuleDef::with_token("caddy-lvl-debug", r#""level"\s*:\s*"debug""#, "debug"),
@@ -268,9 +322,15 @@ fn caddy() -> Module {
             RuleDef::new("caddy-status", r#""status"\s*:\s*(?P<http_code>\d+)"#),
             RuleDef::new("caddy-duration", r#""duration"\s*:\s*(?P<duration>[\d.]+)"#),
             RuleDef::new("caddy-size", r#""(?:size|bytes_read)"\s*:\s*(?P<size>\d+)"#),
-            RuleDef::new("caddy-method", r#""method"\s*:\s*"(?P<http_method>[A-Z]+)""#),
+            RuleDef::new(
+                "caddy-method",
+                r#""method"\s*:\s*"(?P<http_method>[A-Z]+)""#,
+            ),
             RuleDef::new("caddy-uri", r#""uri"\s*:\s*"(?P<uri>[^"]*)""#),
-            RuleDef::new("caddy-ip", r#""(?:remote_ip|client_ip)"\s*:\s*"(?P<ip>[^"]*)""#),
+            RuleDef::new(
+                "caddy-ip",
+                r#""(?:remote_ip|client_ip)"\s*:\s*"(?P<ip>[^"]*)""#,
+            ),
             RuleDef::with_token("caddy-true", r"\btrue\b", "good"),
             RuleDef::with_token("caddy-false", r"\bfalse\b", "bad"),
             RuleDef::with_token("caddy-null", r"\bnull\b", "unknown"),
@@ -310,7 +370,11 @@ fn postgres() -> Module {
             RuleDef::with_token("postgres-error", r"\b(?:FATAL|PANIC|ERROR):", "error"),
             RuleDef::with_token("postgres-warning", r"\bWARNING:", "warning"),
             RuleDef::with_token("postgres-info", r"\b(?:LOG|STATEMENT):", "info"),
-            RuleDef::with_token("postgres-debug", r"\b(?:DETAIL|HINT|CONTEXT|NOTICE):", "debug"),
+            RuleDef::with_token(
+                "postgres-debug",
+                r"\b(?:DETAIL|HINT|CONTEXT|NOTICE):",
+                "debug",
+            ),
         ],
     )
 }
@@ -347,9 +411,18 @@ fn redis() -> Module {
                 "redis-line",
                 r"^(?P<pid>\d+):(?P<process>[MSCX])\s(?P<date>\d{1,2}\s\w{3}\s\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)",
             ),
-            RuleDef::new("redis-warning", r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<warning>#)"),
-            RuleDef::new("redis-info", r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<info>[*\-])"),
-            RuleDef::new("redis-debug", r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<debug>\.)"),
+            RuleDef::new(
+                "redis-warning",
+                r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<warning>#)",
+            ),
+            RuleDef::new(
+                "redis-info",
+                r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<info>[*\-])",
+            ),
+            RuleDef::new(
+                "redis-debug",
+                r"^\d+:[MSCX]\s\d{1,2}\s\w{3}\s\d{4}\s\d{2}:\d{2}:\d{2}\.\d+\s(?P<debug>\.)",
+            ),
         ],
     )
 }
@@ -385,10 +458,22 @@ fn klog() -> Module {
         "klog",
         "Kubernetes/glog klog leveled logs",
         vec![
-            RuleDef::new("klog-info", r"^(?P<info>I)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]"),
-            RuleDef::new("klog-warning", r"^(?P<warning>W)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]"),
-            RuleDef::new("klog-error", r"^(?P<error>E)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]"),
-            RuleDef::new("klog-fatal", r"^(?P<error>F)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]"),
+            RuleDef::new(
+                "klog-info",
+                r"^(?P<info>I)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]",
+            ),
+            RuleDef::new(
+                "klog-warning",
+                r"^(?P<warning>W)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]",
+            ),
+            RuleDef::new(
+                "klog-error",
+                r"^(?P<error>E)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]",
+            ),
+            RuleDef::new(
+                "klog-fatal",
+                r"^(?P<error>F)(?P<date>\d{4})\s(?P<time>\d{2}:\d{2}:\d{2}\.\d+)\s+(?P<pid>\d+)\s+(?P<file>\S+\.go:\d+)\]",
+            ),
         ],
     )
 }
@@ -400,14 +485,26 @@ fn docker() -> Module {
         "Docker daemon (logrus text) and json-file container logs",
         vec![
             RuleDef::new("docker-time", r#"^time="(?P<date>[^"]+)""#),
-            RuleDef::new("docker-level-error", r"\blevel=(?P<error>(?i:error|fatal|panic))\b"),
-            RuleDef::new("docker-level-warning", r"\blevel=(?P<warning>(?i:warn|warning))\b"),
+            RuleDef::new(
+                "docker-level-error",
+                r"\blevel=(?P<error>(?i:error|fatal|panic))\b",
+            ),
+            RuleDef::new(
+                "docker-level-warning",
+                r"\blevel=(?P<warning>(?i:warn|warning))\b",
+            ),
             RuleDef::new("docker-level-info", r"\blevel=(?P<info>(?i:info))\b"),
-            RuleDef::new("docker-level-debug", r"\blevel=(?P<debug>(?i:debug|trace))\b"),
+            RuleDef::new(
+                "docker-level-debug",
+                r"\blevel=(?P<debug>(?i:debug|trace))\b",
+            ),
             RuleDef::new("docker-string-value", r#"=(?P<string>"(?:[^"\\]|\\.)*")"#),
             RuleDef::new("docker-key", r"(?P<field>[A-Za-z_][\w.\-]*)="),
             RuleDef::new("docker-json-key", r#"(?P<json_key>"[\w.\-]+")\s*:"#),
-            RuleDef::new("docker-stream", r#""stream"\s*:\s*(?P<string>"std(?:out|err)")"#),
+            RuleDef::new(
+                "docker-stream",
+                r#""stream"\s*:\s*(?P<string>"std(?:out|err)")"#,
+            ),
             RuleDef::new("docker-json-time", r#""time"\s*:\s*"(?P<date>[^"]+)""#),
         ],
     )
@@ -445,8 +542,14 @@ fn python() -> Module {
                 "python-line",
                 r"^(?P<date>\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,\d{3})\s-\s(?P<process>[\w.]+)\s-\s(?:DEBUG|INFO|WARNING|ERROR|CRITICAL)\s-\s",
             ),
-            RuleDef::new("python-colon-line", r"^(?:DEBUG|INFO|WARNING|ERROR|CRITICAL):(?P<process>[\w.]+):"),
-            RuleDef::new("python-bracket-line", r"^\[(?:DEBUG|INFO|WARNING|ERROR|CRITICAL)\]"),
+            RuleDef::new(
+                "python-colon-line",
+                r"^(?:DEBUG|INFO|WARNING|ERROR|CRITICAL):(?P<process>[\w.]+):",
+            ),
+            RuleDef::new(
+                "python-bracket-line",
+                r"^\[(?:DEBUG|INFO|WARNING|ERROR|CRITICAL)\]",
+            ),
             RuleDef::with_token("python-lvl-error", r"\b(?:ERROR|CRITICAL)\b", "error"),
             RuleDef::with_token("python-lvl-warn", r"\bWARNING\b", "warning"),
             RuleDef::with_token("python-lvl-info", r"\bINFO\b", "info"),
@@ -529,8 +632,14 @@ fn dnsmasq() -> Module {
         "dnsmasq",
         "dnsmasq DNS query/reply log (syslog)",
         vec![
-            RuleDef::new("dnsmasq-proc", r"\b(?P<process>dnsmasq(?:-dhcp)?)\[(?P<pid>\d+)\]:"),
-            RuleDef::new("dnsmasq-query", r"\b(?P<keyword>query)\[(?P<protocol>[A-Z0-9]+)\]\s+(?P<host>\S+)"),
+            RuleDef::new(
+                "dnsmasq-proc",
+                r"\b(?P<process>dnsmasq(?:-dhcp)?)\[(?P<pid>\d+)\]:",
+            ),
+            RuleDef::new(
+                "dnsmasq-query",
+                r"\b(?P<keyword>query)\[(?P<protocol>[A-Z0-9]+)\]\s+(?P<host>\S+)",
+            ),
             RuleDef::with_token(
                 "dnsmasq-verb",
                 r"\b(?:reply|reply-truncated|cached|cached-stale|forwarded|config|local|DHCPDISCOVER|DHCPOFFER|DHCPREQUEST|DHCPACK|DHCPNAK)\b",

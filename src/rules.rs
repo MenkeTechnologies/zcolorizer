@@ -34,7 +34,12 @@ pub struct RuleDef {
 
 impl RuleDef {
     pub fn new(name: &str, pattern: &str) -> RuleDef {
-        RuleDef { name: name.into(), pattern: pattern.into(), token: None, ignore_case: false }
+        RuleDef {
+            name: name.into(),
+            pattern: pattern.into(),
+            token: None,
+            ignore_case: false,
+        }
     }
     pub fn with_token(name: &str, pattern: &str, token: &str) -> RuleDef {
         RuleDef {
@@ -75,13 +80,18 @@ impl Rule {
             name: def.name.clone(),
             source: e,
         })?;
-        let group_tokens: Vec<Option<String>> =
-            regex.capture_names().map(|n| n.map(|s| s.to_string())).collect();
+        let group_tokens: Vec<Option<String>> = regex
+            .capture_names()
+            .map(|n| n.map(|s| s.to_string()))
+            .collect();
         let has_named_groups = group_tokens.iter().skip(1).any(|n| n.is_some());
         Ok(Rule {
             name: def.name.clone(),
             regex,
-            whole_token: def.token.clone().unwrap_or_else(|| tokens::DEFAULT.to_string()),
+            whole_token: def
+                .token
+                .clone()
+                .unwrap_or_else(|| tokens::DEFAULT.to_string()),
             group_tokens,
             has_named_groups,
         })
@@ -113,10 +123,20 @@ pub fn builtin_generic() -> Vec<RuleDef> {
         r"(?P<date>(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2})\s+(?P<time>\d{2}:\d{2}:\d{2})",
     ));
     // proc[pid]: — process name + bracketed pid
-    r.push(RuleDef::new("proc-pid", r"(?P<process>[\w./-]+)\[(?P<pid>\d+)\]"));
+    r.push(RuleDef::new(
+        "proc-pid",
+        r"(?P<process>[\w./-]+)\[(?P<pid>\d+)\]",
+    ));
 
     // ---- Log levels / severity keywords (whole-match word rules) ----
-    r.push(RuleDef::with_token("lvl-error", r"\b(ERROR|ERR|CRITICAL|CRIT|FATAL|EMERG|ALERT|PANIC)\b", ERROR).ci());
+    r.push(
+        RuleDef::with_token(
+            "lvl-error",
+            r"\b(ERROR|ERR|CRITICAL|CRIT|FATAL|EMERG|ALERT|PANIC)\b",
+            ERROR,
+        )
+        .ci(),
+    );
     r.push(RuleDef::with_token("lvl-warn", r"\b(WARNING|WARN)\b", WARNING).ci());
     r.push(RuleDef::with_token("lvl-debug", r"\b(DEBUG|TRACE)\b", DEBUG).ci());
     r.push(RuleDef::with_token("lvl-info", r"\b(INFO|NOTICE)\b", INFO).ci());
@@ -139,28 +159,81 @@ pub fn builtin_generic() -> Vec<RuleDef> {
     ).ci());
 
     // ---- HTTP ----
-    r.push(RuleDef::with_token("http-method", r"\b(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|CONNECT|TRACE)\b", HTTP_METHOD));
+    r.push(RuleDef::with_token(
+        "http-method",
+        r"\b(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|CONNECT|TRACE)\b",
+        HTTP_METHOD,
+    ));
     // Status code in a combined/common access-log line: `… HTTP/1.1" 200 1234`.
     // Named group so only the code is painted; anchored to `HTTP/x.x"` to avoid
     // coloring every 3-digit number as a status code.
-    r.push(RuleDef::new("http-code", r#"HTTP/\d\.\d"?\s+(?P<http_code>[1-5]\d{2})\b"#));
+    r.push(RuleDef::new(
+        "http-code",
+        r#"HTTP/\d\.\d"?\s+(?P<http_code>[1-5]\d{2})\b"#,
+    ));
 
     // ---- Network / identifiers ----
-    r.push(RuleDef::with_token("ipv4", r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", IP));
-    r.push(RuleDef::with_token("ipv6", r"\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b", IP));
-    r.push(RuleDef::with_token("mac", r"\b(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\b", MAC));
-    r.push(RuleDef::with_token("email", r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", EMAIL));
+    r.push(RuleDef::with_token(
+        "ipv4",
+        r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
+        IP,
+    ));
+    r.push(RuleDef::with_token(
+        "ipv6",
+        r"\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b",
+        IP,
+    ));
+    r.push(RuleDef::with_token(
+        "mac",
+        r"\b(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}\b",
+        MAC,
+    ));
+    r.push(RuleDef::with_token(
+        "email",
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+        EMAIL,
+    ));
     r.push(RuleDef::with_token("uri", r#"\b[a-z][a-z0-9+.-]*://[^\s)\]}>'"]+"#, URI).ci());
-    r.push(RuleDef::with_token("hostname", r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b", HOST).ci());
+    r.push(
+        RuleDef::with_token(
+            "hostname",
+            r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}\b",
+            HOST,
+        )
+        .ci(),
+    );
 
     // ---- Filesystem ----
-    r.push(RuleDef::with_token("abs-path", r"(?:^|\s)(?P<dir>/[\w./@+-]*)", DIR));
+    r.push(RuleDef::with_token(
+        "abs-path",
+        r"(?:^|\s)(?P<dir>/[\w./@+-]*)",
+        DIR,
+    ));
 
     // ---- Numbers / sizes / versions / addresses ----
-    r.push(RuleDef::with_token("hex-addr", r"\b0x[0-9a-fA-F]+\b", ADDRESS));
-    r.push(RuleDef::with_token("size", r"\b\d+(?:\.\d+)?\s?(?:[KMGTP]i?B|[kmgtp]b?|bytes?)\b", SIZE));
-    r.push(RuleDef::with_token("version", r"\bv?\d+\.\d+(?:\.\d+)*(?:[-+][\w.]+)?\b", VERSION).ci());
-    r.push(RuleDef::with_token("percentage", r"\b\d+(?:\.\d+)?%", PERCENTAGE));
+    r.push(RuleDef::with_token(
+        "hex-addr",
+        r"\b0x[0-9a-fA-F]+\b",
+        ADDRESS,
+    ));
+    r.push(RuleDef::with_token(
+        "size",
+        r"\b\d+(?:\.\d+)?\s?(?:[KMGTP]i?B|[kmgtp]b?|bytes?)\b",
+        SIZE,
+    ));
+    r.push(
+        RuleDef::with_token(
+            "version",
+            r"\bv?\d+\.\d+(?:\.\d+)*(?:[-+][\w.]+)?\b",
+            VERSION,
+        )
+        .ci(),
+    );
+    r.push(RuleDef::with_token(
+        "percentage",
+        r"\b\d+(?:\.\d+)?%",
+        PERCENTAGE,
+    ));
     r.push(RuleDef::with_token("signal", r"\bSIG(?:HUP|INT|QUIT|ILL|TRAP|ABRT|BUS|FPE|KILL|USR1|SEGV|USR2|PIPE|ALRM|TERM|CHLD|CONT|STOP|TSTP|TTIN|TTOU)\b", SIGNAL));
     r.push(RuleDef::with_token("number", r"\b\d+\b", NUMBER));
 
@@ -184,7 +257,10 @@ mod tests {
     fn named_groups_detected() {
         let rule = Rule::compile(&RuleDef::new("dt", r"(?P<date>\d+)-(?P<time>\d+)")).unwrap();
         assert!(rule.has_named_groups);
-        assert_eq!(rule.group_tokens, vec![None, Some("date".into()), Some("time".into())]);
+        assert_eq!(
+            rule.group_tokens,
+            vec![None, Some("date".into()), Some("time".into())]
+        );
     }
 
     #[test]
@@ -252,6 +328,9 @@ mod tests {
         let rule = Rule::compile(&RuleDef::new("g", r"(?P<a>x)(y)(?P<b>z)")).unwrap();
         assert_eq!(rule.group_tokens.first(), Some(&None));
         // An unnamed inner group stays None; named ones carry their token.
-        assert_eq!(rule.group_tokens, vec![None, Some("a".into()), None, Some("b".into())]);
+        assert_eq!(
+            rule.group_tokens,
+            vec![None, Some("a".into()), None, Some("b".into())]
+        );
     }
 }

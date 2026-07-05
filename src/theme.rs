@@ -67,7 +67,7 @@ pub mod tokens {
     pub const UNIQUE: &str = "unique"; // unique id (exim)
     pub const REPEAT: &str = "repeat"; // "last message repeated N times"
     pub const SWAPNUM: &str = "swapnum"; // squid swap number
-    // Proxy (squid) action / hierarchy / store-tag tokens
+                                         // Proxy (squid) action / hierarchy / store-tag tokens
     pub const PROXY_HIT: &str = "proxy_hit";
     pub const PROXY_MISS: &str = "proxy_miss";
     pub const PROXY_DENIED: &str = "proxy_denied";
@@ -153,37 +153,161 @@ struct Palette {
 
 /// All 31 palettes, in iftoprs declaration order (NeonSprawl is the default).
 const PALETTES: &[Palette] = &[
-    Palette { name: "neon-sprawl", display: "Neon Sprawl", c: [27, 48, 135, 141, 63, 99] },
-    Palette { name: "acid-rain", display: "Acid Rain", c: [28, 46, 34, 40, 22, 35] },
-    Palette { name: "ice-breaker", display: "Ice Breaker", c: [19, 39, 25, 33, 21, 32] },
-    Palette { name: "synth-wave", display: "Synth Wave", c: [91, 177, 128, 134, 93, 97] },
-    Palette { name: "rust-belt", display: "Rust Belt", c: [172, 214, 178, 220, 166, 130] },
-    Palette { name: "ghost-wire", display: "Ghost Wire", c: [37, 50, 44, 87, 30, 23] },
-    Palette { name: "red-sector", display: "Red Sector", c: [160, 203, 196, 210, 124, 88] },
-    Palette { name: "sakura-den", display: "Sakura Den", c: [175, 218, 182, 225, 169, 132] },
-    Palette { name: "data-stream", display: "Data Stream", c: [22, 46, 28, 119, 34, 22] },
-    Palette { name: "solar-flare", display: "Solar Flare", c: [202, 220, 196, 213, 160, 125] },
-    Palette { name: "neon-noir", display: "Neon Noir", c: [201, 231, 93, 219, 57, 53] },
-    Palette { name: "chrome-heart", display: "Chrome Heart", c: [250, 255, 246, 253, 243, 239] },
-    Palette { name: "blade-runner", display: "Blade Runner", c: [208, 37, 166, 73, 130, 23] },
-    Palette { name: "void-walker", display: "Void Walker", c: [55, 99, 54, 141, 92, 17] },
-    Palette { name: "toxic-waste", display: "Toxic Waste", c: [118, 190, 154, 226, 82, 58] },
-    Palette { name: "cyber-frost", display: "Cyber Frost", c: [159, 195, 153, 189, 111, 67] },
-    Palette { name: "plasma-core", display: "Plasma Core", c: [199, 213, 163, 207, 126, 89] },
-    Palette { name: "steel-nerve", display: "Steel Nerve", c: [68, 110, 60, 146, 24, 236] },
-    Palette { name: "dark-signal", display: "Dark Signal", c: [30, 43, 23, 79, 29, 16] },
-    Palette { name: "glitch-pop", display: "Glitch Pop", c: [201, 51, 226, 47, 196, 21] },
-    Palette { name: "holo-shift", display: "Holo Shift", c: [123, 219, 159, 183, 87, 133] },
-    Palette { name: "night-city", display: "Night City", c: [214, 227, 209, 223, 172, 94] },
-    Palette { name: "deep-net", display: "Deep Net", c: [19, 33, 17, 75, 26, 16] },
-    Palette { name: "laser-grid", display: "Laser Grid", c: [46, 201, 51, 226, 196, 21] },
-    Palette { name: "quantum-flux", display: "Quantum Flux", c: [135, 75, 171, 111, 98, 61] },
-    Palette { name: "bio-hazard", display: "Bio Hazard", c: [148, 184, 106, 192, 64, 22] },
-    Palette { name: "darkwave", display: "Darkwave", c: [53, 140, 89, 176, 127, 52] },
-    Palette { name: "overlock", display: "Overlock", c: [196, 208, 160, 214, 124, 52] },
-    Palette { name: "megacorp", display: "Megacorp", c: [252, 39, 245, 81, 242, 236] },
-    Palette { name: "zaibatsu", display: "Zaibatsu", c: [167, 216, 131, 224, 95, 52] },
-    Palette { name: "iftopcolor", display: "iftopcolor", c: [21, 46, 28, 48, 33, 19] },
+    Palette {
+        name: "neon-sprawl",
+        display: "Neon Sprawl",
+        c: [27, 48, 135, 141, 63, 99],
+    },
+    Palette {
+        name: "acid-rain",
+        display: "Acid Rain",
+        c: [28, 46, 34, 40, 22, 35],
+    },
+    Palette {
+        name: "ice-breaker",
+        display: "Ice Breaker",
+        c: [19, 39, 25, 33, 21, 32],
+    },
+    Palette {
+        name: "synth-wave",
+        display: "Synth Wave",
+        c: [91, 177, 128, 134, 93, 97],
+    },
+    Palette {
+        name: "rust-belt",
+        display: "Rust Belt",
+        c: [172, 214, 178, 220, 166, 130],
+    },
+    Palette {
+        name: "ghost-wire",
+        display: "Ghost Wire",
+        c: [37, 50, 44, 87, 30, 23],
+    },
+    Palette {
+        name: "red-sector",
+        display: "Red Sector",
+        c: [160, 203, 196, 210, 124, 88],
+    },
+    Palette {
+        name: "sakura-den",
+        display: "Sakura Den",
+        c: [175, 218, 182, 225, 169, 132],
+    },
+    Palette {
+        name: "data-stream",
+        display: "Data Stream",
+        c: [22, 46, 28, 119, 34, 22],
+    },
+    Palette {
+        name: "solar-flare",
+        display: "Solar Flare",
+        c: [202, 220, 196, 213, 160, 125],
+    },
+    Palette {
+        name: "neon-noir",
+        display: "Neon Noir",
+        c: [201, 231, 93, 219, 57, 53],
+    },
+    Palette {
+        name: "chrome-heart",
+        display: "Chrome Heart",
+        c: [250, 255, 246, 253, 243, 239],
+    },
+    Palette {
+        name: "blade-runner",
+        display: "Blade Runner",
+        c: [208, 37, 166, 73, 130, 23],
+    },
+    Palette {
+        name: "void-walker",
+        display: "Void Walker",
+        c: [55, 99, 54, 141, 92, 17],
+    },
+    Palette {
+        name: "toxic-waste",
+        display: "Toxic Waste",
+        c: [118, 190, 154, 226, 82, 58],
+    },
+    Palette {
+        name: "cyber-frost",
+        display: "Cyber Frost",
+        c: [159, 195, 153, 189, 111, 67],
+    },
+    Palette {
+        name: "plasma-core",
+        display: "Plasma Core",
+        c: [199, 213, 163, 207, 126, 89],
+    },
+    Palette {
+        name: "steel-nerve",
+        display: "Steel Nerve",
+        c: [68, 110, 60, 146, 24, 236],
+    },
+    Palette {
+        name: "dark-signal",
+        display: "Dark Signal",
+        c: [30, 43, 23, 79, 29, 16],
+    },
+    Palette {
+        name: "glitch-pop",
+        display: "Glitch Pop",
+        c: [201, 51, 226, 47, 196, 21],
+    },
+    Palette {
+        name: "holo-shift",
+        display: "Holo Shift",
+        c: [123, 219, 159, 183, 87, 133],
+    },
+    Palette {
+        name: "night-city",
+        display: "Night City",
+        c: [214, 227, 209, 223, 172, 94],
+    },
+    Palette {
+        name: "deep-net",
+        display: "Deep Net",
+        c: [19, 33, 17, 75, 26, 16],
+    },
+    Palette {
+        name: "laser-grid",
+        display: "Laser Grid",
+        c: [46, 201, 51, 226, 196, 21],
+    },
+    Palette {
+        name: "quantum-flux",
+        display: "Quantum Flux",
+        c: [135, 75, 171, 111, 98, 61],
+    },
+    Palette {
+        name: "bio-hazard",
+        display: "Bio Hazard",
+        c: [148, 184, 106, 192, 64, 22],
+    },
+    Palette {
+        name: "darkwave",
+        display: "Darkwave",
+        c: [53, 140, 89, 176, 127, 52],
+    },
+    Palette {
+        name: "overlock",
+        display: "Overlock",
+        c: [196, 208, 160, 214, 124, 52],
+    },
+    Palette {
+        name: "megacorp",
+        display: "Megacorp",
+        c: [252, 39, 245, 81, 242, 236],
+    },
+    Palette {
+        name: "zaibatsu",
+        display: "Zaibatsu",
+        c: [167, 216, 131, 224, 95, 52],
+    },
+    Palette {
+        name: "iftopcolor",
+        display: "iftopcolor",
+        c: [21, 46, 28, 48, 33, 19],
+    },
 ];
 
 /// Shift an indexed 256-color one step lighter (ported from iftoprs) — used to
@@ -214,8 +338,14 @@ fn theme_from_palette(p: &Palette) -> Theme {
 
     let i = |n: u8| Style::fg(Color::idx(n));
     let bi = |n: u8| Style::bold_fg(Color::idx(n));
-    let ui = |n: u8| Style { underline: true, ..Style::fg(Color::idx(n)) };
-    let it = |n: u8| Style { italic: true, ..Style::fg(Color::idx(n)) };
+    let ui = |n: u8| Style {
+        underline: true,
+        ..Style::fg(Color::idx(n))
+    };
+    let it = |n: u8| Style {
+        italic: true,
+        ..Style::fg(Color::idx(n))
+    };
 
     let entries: Vec<(&str, Style)> = vec![
         (DATE, bi(c2)),
@@ -294,7 +424,10 @@ fn theme_from_palette(p: &Palette) -> Theme {
         name: p.name.to_string(),
         description: format!("Cyberpunk palette — {}", p.display),
         base: i(c1),
-        styles: entries.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
+        styles: entries
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v))
+            .collect(),
     }
 }
 
@@ -466,9 +599,18 @@ mod tests {
         assert_eq!(merged.base, Style::fg(Color::Named(Named::Cyan)));
         assert_eq!(merged.description, "base desc");
         // ERROR overridden, INFO untouched, GOOD added.
-        assert_eq!(merged.style(tokens::ERROR), Style::bold_fg(Color::Named(Named::Magenta)));
-        assert_eq!(merged.style(tokens::INFO), Style::fg(Color::Named(Named::Blue)));
-        assert_eq!(merged.style(tokens::GOOD), Style::fg(Color::Named(Named::Green)));
+        assert_eq!(
+            merged.style(tokens::ERROR),
+            Style::bold_fg(Color::Named(Named::Magenta))
+        );
+        assert_eq!(
+            merged.style(tokens::INFO),
+            Style::fg(Color::Named(Named::Blue))
+        );
+        assert_eq!(
+            merged.style(tokens::GOOD),
+            Style::fg(Color::Named(Named::Green))
+        );
     }
 
     #[test]
@@ -494,7 +636,11 @@ mod tests {
         let mut dedup = names.clone();
         dedup.sort();
         dedup.dedup();
-        assert_eq!(dedup.len(), names.len(), "builtin theme names must be unique");
+        assert_eq!(
+            dedup.len(),
+            names.len(),
+            "builtin theme names must be unique"
+        );
     }
 
     #[test]
@@ -511,7 +657,10 @@ mod tests {
     fn every_builtin_name_resolves_back() {
         // Round-trip: each builtin's own name normalizes to itself.
         for t in builtins() {
-            assert_eq!(builtin(&t.name).map(|b| b.name).as_deref(), Some(t.name.as_str()));
+            assert_eq!(
+                builtin(&t.name).map(|b| b.name).as_deref(),
+                Some(t.name.as_str())
+            );
         }
     }
 }

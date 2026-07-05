@@ -94,7 +94,11 @@ impl From<RgbRepr> for Rgb {
     fn from(r: RgbRepr) -> Self {
         match r {
             RgbRepr::Hex(s) => Rgb::from_hex(&s).unwrap_or(Rgb { r: 0, g: 0, b: 0 }),
-            RgbRepr::Triple { rgb } => Rgb { r: rgb[0], g: rgb[1], b: rgb[2] },
+            RgbRepr::Triple { rgb } => Rgb {
+                r: rgb[0],
+                g: rgb[1],
+                b: rgb[2],
+            },
         }
     }
 }
@@ -200,11 +204,18 @@ impl Style {
     }
 
     pub fn fg(color: Color) -> Style {
-        Style { fg: Some(color), ..Style::default() }
+        Style {
+            fg: Some(color),
+            ..Style::default()
+        }
     }
 
     pub fn bold_fg(color: Color) -> Style {
-        Style { fg: Some(color), bold: true, ..Style::default() }
+        Style {
+            fg: Some(color),
+            bold: true,
+            ..Style::default()
+        }
     }
 
     /// True when this style would emit no escape at all.
@@ -265,7 +276,14 @@ mod tests {
 
     #[test]
     fn hex_parsing() {
-        assert_eq!(Rgb::from_hex("#ff00aa"), Some(Rgb { r: 255, g: 0, b: 170 }));
+        assert_eq!(
+            Rgb::from_hex("#ff00aa"),
+            Some(Rgb {
+                r: 255,
+                g: 0,
+                b: 170
+            })
+        );
         assert_eq!(Rgb::from_hex("0a0"), Some(Rgb { r: 0, g: 170, b: 0 }));
         assert_eq!(Rgb::from_hex("nope"), None);
     }
@@ -278,14 +296,24 @@ mod tests {
 
     #[test]
     fn named_bg_offset() {
-        let s = Style { bg: Some(Color::Named(Named::Blue)), ..Style::default() };
+        let s = Style {
+            bg: Some(Color::Named(Named::Blue)),
+            ..Style::default()
+        };
         assert_eq!(s.prefix(), "\x1b[44m");
     }
 
     #[test]
     fn hex_parsing_edge_cases() {
         // Uppercase digits parse the same as lowercase.
-        assert_eq!(Rgb::from_hex("#FF00AA"), Some(Rgb { r: 255, g: 0, b: 170 }));
+        assert_eq!(
+            Rgb::from_hex("#FF00AA"),
+            Some(Rgb {
+                r: 255,
+                g: 0,
+                b: 170
+            })
+        );
         // Leading/trailing whitespace is tolerated.
         assert_eq!(Rgb::from_hex("  #0a0  "), Some(Rgb { r: 0, g: 170, b: 0 }));
         // Wrong lengths and empty input are rejected.
@@ -300,13 +328,19 @@ mod tests {
     fn indexed_fg_and_bg_prefix() {
         // 256-color foreground uses the 38;5;N form, background 48;5;N.
         assert_eq!(Style::fg(Color::idx(196)).prefix(), "\x1b[38;5;196m");
-        let bg = Style { bg: Some(Color::idx(21)), ..Style::default() };
+        let bg = Style {
+            bg: Some(Color::idx(21)),
+            ..Style::default()
+        };
         assert_eq!(bg.prefix(), "\x1b[48;5;21m");
     }
 
     #[test]
     fn truecolor_bg_prefix() {
-        let s = Style { bg: Some(Color::hex("#102030")), ..Style::default() };
+        let s = Style {
+            bg: Some(Color::hex("#102030")),
+            ..Style::default()
+        };
         assert_eq!(s.prefix(), "\x1b[48;2;16;32;48m");
     }
 
@@ -350,7 +384,14 @@ mod tests {
     #[test]
     fn idx_and_hex_constructors() {
         assert_eq!(Color::idx(213), Color::Indexed(Indexed { index: 213 }));
-        assert_eq!(Color::hex("#ff00aa"), Color::Rgb(Rgb { r: 255, g: 0, b: 170 }));
+        assert_eq!(
+            Color::hex("#ff00aa"),
+            Color::Rgb(Rgb {
+                r: 255,
+                g: 0,
+                b: 170
+            })
+        );
     }
 
     #[test]
@@ -359,24 +400,55 @@ mod tests {
         assert_eq!(Style::fg(Color::Named(Named::Black)).prefix(), "\x1b[30m");
         assert_eq!(Style::fg(Color::Named(Named::White)).prefix(), "\x1b[37m");
         assert_eq!(Style::fg(Color::Named(Named::Green)).prefix(), "\x1b[32m");
-        assert_eq!(Style::fg(Color::Named(Named::BrightGreen)).prefix(), "\x1b[92m");
+        assert_eq!(
+            Style::fg(Color::Named(Named::BrightGreen)).prefix(),
+            "\x1b[92m"
+        );
         // Background is foreground + 10, including for the bright range.
-        let bg = Style { bg: Some(Color::Named(Named::BrightRed)), ..Style::default() };
+        let bg = Style {
+            bg: Some(Color::Named(Named::BrightRed)),
+            ..Style::default()
+        };
         assert_eq!(bg.prefix(), "\x1b[101m");
     }
 
     #[test]
     fn single_attribute_styles() {
         // Each attribute alone emits exactly its own SGR parameter.
-        assert_eq!(Style { dim: true, ..Style::default() }.prefix(), "\x1b[2m");
-        assert_eq!(Style { reverse: true, ..Style::default() }.prefix(), "\x1b[7m");
-        assert_eq!(Style { underline: true, ..Style::default() }.prefix(), "\x1b[4m");
+        assert_eq!(
+            Style {
+                dim: true,
+                ..Style::default()
+            }
+            .prefix(),
+            "\x1b[2m"
+        );
+        assert_eq!(
+            Style {
+                reverse: true,
+                ..Style::default()
+            }
+            .prefix(),
+            "\x1b[7m"
+        );
+        assert_eq!(
+            Style {
+                underline: true,
+                ..Style::default()
+            }
+            .prefix(),
+            "\x1b[4m"
+        );
     }
 
     #[test]
     fn rgb_serializes_back_to_hex_string() {
         // `Rgb` round-trips through its on-disk `#rrggbb` representation.
-        let c = Rgb { r: 16, g: 32, b: 48 };
+        let c = Rgb {
+            r: 16,
+            g: 32,
+            b: 48,
+        };
         let repr: RgbRepr = c.into();
         match repr {
             RgbRepr::Hex(s) => assert_eq!(s, "#102030"),
