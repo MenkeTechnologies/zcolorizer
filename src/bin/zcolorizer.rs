@@ -115,7 +115,6 @@ fn print_cyberpunk_help() {
     const M: &str = "\x1b[35m"; // magenta
     const Y: &str = "\x1b[33m"; // yellow — USAGE
     const G: &str = "\x1b[32m"; // green — `//` comment marker
-    const D: &str = "\x1b[2m"; // dim — footer
     const N: &str = "\x1b[0m"; // reset
 
     // Banner with a vertical cyan→magenta neon gradient (truecolor).
@@ -128,6 +127,18 @@ fn print_cyberpunk_help() {
         let b = (255.0 - t * 41.0) as u8;
         println!("\x1b[1;38;2;{r};{g};{b}m{line}{N}");
     }
+
+    // Status box (cyan). Padded at runtime with `.chars().count()` so the right
+    // border never drifts as VERSION grows; BOX_W tracks the banner width.
+    const BOX_W: usize = 74;
+    let status = format!(" STATUS: ONLINE  // SIGNAL: ████████░░ // v{version}");
+    let space = " ".repeat(BOX_W.saturating_sub(status.chars().count()));
+    let rule = "─".repeat(BOX_W);
+    println!(" {C}┌{rule}┐{N}");
+    println!(" {C}│{N}{status}{space}{C}│{N}");
+    println!(" {C}└{rule}┘{N}");
+    println!("  {M}>> ZCOLORIZER // FULL SPECTRUM <<{N}");
+
     let module_count = zcolorizer::modules::all().len();
     println!();
     println!("  {M}Real-time log colorizer{N} — ccze/pygments port · 31 cyberpunk themes · {module_count} modules");
@@ -203,7 +214,11 @@ fn print_cyberpunk_help() {
     row("-V, --version", "print version");
     println!();
 
-    println!("{D}  zcolorizer v{version} · MenkeTechnologies · cyberpunk by default{N}");
+    println!("{C}  ── SYSTEM ────────────────────────────────────────────{N}");
+    println!("  {M}v{version} {N}// {Y}(c) Jacob Menke and contributors{N}");
+    println!("  {M}Every log line. Every color. Full spectrum.{N}");
+    println!("  {Y}>>> JACK IN. PIPE YOUR LOGS. PAINT THE STREAM. <<<{N}");
+    println!(" {C}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░{N}");
 }
 
 fn main() -> ExitCode {
