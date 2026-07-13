@@ -8,10 +8,32 @@
 //! simply by being listed first — mirroring ccze's module-then-wordcolor flow.
 
 use std::borrow::Cow;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::color::Style;
+use crate::novelty::NoveltyModel;
 use crate::rules::Rule;
 use crate::theme::{tokens, Theme};
+
+/// Token classes whose *value* is a variable field (it changes line to line even
+/// when the surrounding message is identical). The novelty template masks these
+/// spans by class so two lines differing only in these fields hash identically.
+const VARIABLE_TOKENS: &[&str] = &[
+    tokens::NUMBER,
+    tokens::IP,
+    tokens::ADDRESS,
+    tokens::PID,
+    tokens::SIZE,
+    tokens::VERSION,
+    tokens::DATE,
+    tokens::TIME,
+];
+
+/// True when `name` tags a variable-value span (see [`VARIABLE_TOKENS`]).
+fn is_variable_token(name: &str) -> bool {
+    VARIABLE_TOKENS.contains(&name)
+}
 
 /// A compiled, ready-to-run colorizer: rules + the theme that styles their tokens.
 #[derive(Debug, Clone)]
@@ -54,11 +76,37 @@ impl Colorizer {
         if line.is_empty() {
             return String::new();
         }
-        let len = line.len();
+        let (owner, token_names) = self.build_owner(line);
+        self.render(line, &owner, &token_names)
+    }
 
-        // owner[b] = index into `token_names` for the token owning byte b, or
-        // usize::MAX for "unclaimed" (rendered with the default/base style).
-        let mut owner = vec![usize::MAX; len];
+    /// Colorize one line, modulating every span's *intensity* by the statistical
+    /// novelty of the line's masked template rather than by pattern class.
+    ///
+    /// The line's variable-value spans (numbers, IPs, PIDs, sizes, versions,
+    /// dates, times, addresses) are masked to form a template; the template is
+    /// hashed and scored against `model`. A first-seen / rare template renders
+    /// bright + bold; a template that dominates a repetitive stream dims. The
+    /// `model` is updated in place, so a `tail -f` self-quiets over time.
+    pub fn colorize_line_novelty(&self, line: &str, model: &mut NoveltyModel) -> String {
+        let sanitized = sanitize(line);
+        let line: &str = &sanitized;
+        if line.is_empty() {
+            return String::new();
+        }
+        let (owner, token_names) = self.build_owner(line);
+        let hash = template_hash(line, &owner, &token_names);
+        let intensity = model.observe_and_score(hash);
+        self.render_intensity(line, &owner, &token_names, intensity)
+    }
+
+    /// Run every rule over `line` and return the byte-owner map plus the interned
+    /// token names. `line` must already be [`sanitize`]d and non-empty.
+    ///
+    /// `owner[b]` is the index into the returned names of the token owning byte
+    /// `b`, or `usize::MAX` for an unclaimed byte (rendered with the base style).
+    fn build_owner<'a>(&'a self, line: &str) -> (Vec<usize>, Vec<&'a str>) {
+        let mut owner = vec![usize::MAX; line.len()];
         // Interned token names. All borrow from `self.rules`, so they share one lifetime.
         let mut token_names: Vec<&str> = Vec::new();
 
@@ -84,8 +132,7 @@ impl Colorizer {
                 }
             }
         }
-
-        self.render(line, &owner, &token_names)
+        (owner, token_names)
     }
 
     /// Walk the byte-owner map, grouping maximal runs of equal token and emitting
@@ -110,6 +157,43 @@ impl Colorizer {
             };
             // Slices land on char boundaries because all span ends come from regex
             // match offsets, which are always UTF-8 boundaries.
+            out.push_str(&style.paint(&line[i..j]));
+            i = j;
+        }
+        out
+    }
+
+    /// Like [`render`](Self::render), but each chunk's style is modulated by
+    /// `intensity` (see [`Style::with_intensity`]) so the whole line brightens or
+    /// dims as one, driven by its novelty score. The unclaimed/base style is
+    /// modulated too, so a repetitive line dims even where no rule fired.
+    fn render_intensity(
+        &self,
+        line: &str,
+        owner: &[usize],
+        token_names: &[&str],
+        intensity: f32,
+    ) -> String {
+        let default_style = self.theme.style(tokens::DEFAULT).with_intensity(intensity);
+        let styles: Vec<Style> = token_names
+            .iter()
+            .map(|n| self.theme.style(n).with_intensity(intensity))
+            .collect();
+
+        let mut out = String::with_capacity(line.len() + 16);
+        let mut i = 0;
+        let n = line.len();
+        while i < n {
+            let cur = owner[i];
+            let mut j = i + 1;
+            while j < n && owner[j] == cur {
+                j += 1;
+            }
+            let style = if cur == usize::MAX {
+                default_style
+            } else {
+                styles[cur]
+            };
             out.push_str(&style.paint(&line[i..j]));
             i = j;
         }
@@ -214,6 +298,36 @@ fn claim<'a>(
             *b = id;
         }
     }
+}
+
+/// Hash a line's *template*: the line with its variable-value spans masked by
+/// token class. Runs owned by a [`VARIABLE_TOKENS`] class contribute only their
+/// class name (a fixed marker byte + the name), never their literal bytes, so
+/// two lines differing solely in numbers/IPs/PIDs/sizes/versions/dates/times/
+/// addresses collapse to the same hash. Everything else — literal text and
+/// non-variable tokens — is hashed verbatim, preserving message structure.
+fn template_hash(line: &str, owner: &[usize], token_names: &[&str]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    let bytes = line.as_bytes();
+    let n = line.len();
+    let mut i = 0;
+    while i < n {
+        let cur = owner[i];
+        let mut j = i + 1;
+        while j < n && owner[j] == cur {
+            j += 1;
+        }
+        if cur != usize::MAX && is_variable_token(token_names[cur]) {
+            // Mask: a sentinel that can't collide with a UTF-8 byte, then the
+            // class name — so `ip` and `number` spans stay distinguishable.
+            0xffu8.hash(&mut hasher);
+            token_names[cur].hash(&mut hasher);
+        } else {
+            bytes[i..j].hash(&mut hasher);
+        }
+        i = j;
+    }
+    hasher.finish()
 }
 
 #[cfg(test)]

@@ -223,6 +223,33 @@ impl Style {
         *self == Style::default()
     }
 
+    /// Modulate this style by a novelty *intensity* `t` in `[0, 1]` (see
+    /// [`crate::novelty`]). Intensity drives the terminal attributes only — the
+    /// colour is left untouched:
+    ///
+    /// * `t >= 0.9` — first-seen / anomalous: `bold` + `reverse` (blazes).
+    /// * `t >= 0.4` — rare: `bold`.
+    /// * `t <  0.15` — high-frequency noise: `dim`.
+    /// * otherwise — unchanged.
+    ///
+    /// Thresholds are clamped, so an out-of-range `t` degrades gracefully.
+    pub fn with_intensity(mut self, t: f32) -> Style {
+        let t = t.clamp(0.0, 1.0);
+        if t >= 0.9 {
+            self.bold = true;
+            self.reverse = true;
+            self.dim = false;
+        } else if t >= 0.4 {
+            self.bold = true;
+            self.dim = false;
+        } else if t < 0.15 {
+            self.dim = true;
+            self.bold = false;
+            self.reverse = false;
+        }
+        self
+    }
+
     /// The opening SGR escape sequence for this style, e.g. `\x1b[1;38;2;255;0;170m`.
     /// Returns an empty string for a plain style.
     pub fn prefix(&self) -> String {

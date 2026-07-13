@@ -61,6 +61,8 @@ zcolorizer [OPTIONS] [FILES]...
                          Use `auto` to sniff the input and enable what's present.
   -g, --grep <REGEX>     Show only matching lines (still colorized)
   -H, --highlight <REGEX> Spotlight: dim the lines that don't match
+      --novelty          Intensity tracks statistical novelty, not pattern class
+      --novelty-decay <D> Age the novelty counts (0<D<=1); implies --novelty
       --list-themes      List available themes (active marked with *)
       --list-modules     List available format modules
       --list-rules       List the effective rules after config merge
@@ -89,6 +91,26 @@ tail -f /var/log/syslog | zcolorizer --watch       # recolors live as you edit t
   rebuilding rules + theme without restarting — the live half of the
   "pick the theme from zgui" flow. A half-saved (invalid) config is ignored,
   keeping the previous one until the next good save.
+
+### Novelty coloring
+
+```sh
+tail -f /var/log/syslog | zcolorizer --novelty            # repetitive lines self-dim
+tail -f app.log         | zcolorizer --novelty-decay 0.9  # also forget stale patterns
+```
+
+`--novelty` makes colour *intensity* a function of statistical novelty instead of
+pattern class. Each line's variable-value spans — numbers, IPs, PIDs, sizes,
+versions, dates, times, addresses — are masked to a **template**; the template is
+hashed and scored against an online frequency model. First-seen and rare
+templates render **bright + bold** (and reverse on first sight); a template that
+dominates a repetitive stream **dims**. No rule and no prior knowledge of the log
+format is needed — a `tail -f` of chatter self-quiets while an anomalous line
+lights up. The colours themselves stay theme-driven; only the intensity moves.
+
+`--novelty-decay D` (with `0 < D <= 1`, and implying `--novelty`) ages the counts
+by factor `D` periodically, so a pattern that stops recurring is forgotten and
+re-lights as novel if it returns. Omit it for pure cumulative frequency.
 
 ### Format modules
 

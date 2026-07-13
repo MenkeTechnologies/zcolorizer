@@ -33,6 +33,7 @@ pub mod engine;
 pub mod error;
 pub mod modules;
 pub mod modules_modern;
+pub mod novelty;
 pub mod rules;
 pub mod theme;
 
@@ -40,6 +41,7 @@ pub use color::{Color, Style};
 pub use config::Config;
 pub use engine::Colorizer;
 pub use error::{Error, Result};
+pub use novelty::NoveltyModel;
 pub use theme::Theme;
 
 impl Colorizer {

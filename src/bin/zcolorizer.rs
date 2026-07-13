@@ -14,7 +14,7 @@ use std::time::{Duration, Instant, SystemTime};
 use clap::Parser;
 use regex::Regex;
 use zcolorizer::config::Config;
-use zcolorizer::Colorizer;
+use zcolorizer::{Colorizer, NoveltyModel};
 
 /// How many leading lines `-m auto` samples to fingerprint the log format.
 const SNIFF_LINES: usize = 200;
@@ -75,6 +75,19 @@ struct Cli {
     /// Never emit color (passthrough). Useful to sanity-check input.
     #[arg(long)]
     no_color: bool,
+
+    /// Streaming novelty coloring: intensity tracks statistical novelty, not
+    /// pattern class. Variable fields (numbers, IPs, PIDs, sizes, versions,
+    /// dates, times) are masked to a template; first-seen/rare templates render
+    /// bright+bold, high-frequency noise dims. `tail -f` self-quiets.
+    #[arg(long)]
+    novelty: bool,
+
+    /// Age the novelty model's counts by this factor (0 < D <= 1) every ~512
+    /// lines, so a pattern that stops recurring is forgotten and re-lights as
+    /// novel if it returns. Implies --novelty. Omit for pure cumulative counts.
+    #[arg(long, value_name = "D")]
+    novelty_decay: Option<f32>,
 
     /// List available themes and exit.
     #[arg(long)]
@@ -209,6 +222,17 @@ fn print_cyberpunk_help() {
     row("    --no-color", "never color (passthrough)");
     println!();
 
+    println!("{C}  ── NOVELTY ───────────────────────────────────────────{N}");
+    row(
+        "    --novelty",
+        "intensity = statistical novelty; noise self-dims",
+    );
+    row(
+        "    --novelty-decay D",
+        "age counts (0<D<=1) so silenced patterns relight",
+    );
+    println!();
+
     println!("{C}  ── INFO ──────────────────────────────────────────────{N}");
     row("-h, --help", "print this help");
     row("-V, --version", "print version");
@@ -326,6 +350,15 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
     let grep = compile_filter("--grep", cli.grep.as_deref())?;
     let highlight = compile_filter("--highlight", cli.highlight.as_deref())?;
 
+    // Novelty model: `--novelty-decay D` implies `--novelty` and ages the counts.
+    let novelty = match build_novelty(cli.novelty, cli.novelty_decay) {
+        Ok(n) => n,
+        Err(msg) => {
+            eprintln!("zcolorizer: {msg}");
+            return Ok(ExitCode::FAILURE);
+        }
+    };
+
     let stdout = io::stdout();
     let want_color = cli.force_color || (!cli.no_color && stdout.is_terminal());
 
@@ -398,6 +431,7 @@ fn run(cli: Cli) -> zcolorizer::Result<ExitCode> {
         grep,
         highlight,
         reload,
+        novelty,
     };
 
     let stdout = io::stdout();
@@ -470,6 +504,18 @@ fn compile_filter(flag: &str, pat: Option<&str>) -> zcolorizer::Result<Option<Re
                 name: flag.to_string(),
                 source,
             }),
+        None => Ok(None),
+    }
+}
+
+/// Build the streaming novelty model from the flags. `--novelty-decay` implies
+/// `--novelty`. Returns `None` when novelty coloring is off, or an error message
+/// (for stderr) when the decay factor is outside `(0, 1]`.
+fn build_novelty(novelty: bool, decay: Option<f32>) -> Result<Option<NoveltyModel>, String> {
+    match decay {
+        Some(d) if d > 0.0 && d <= 1.0 => Ok(Some(NoveltyModel::with_decay(d))),
+        Some(d) => Err(format!("--novelty-decay: must be in (0, 1], got {d}")),
+        None if novelty => Ok(Some(NoveltyModel::new())),
         None => Ok(None),
     }
 }
@@ -573,6 +619,9 @@ struct Session {
     grep: Option<Regex>,
     highlight: Option<Regex>,
     reload: Option<Reloader>,
+    /// The online novelty model when `--novelty`/`--novelty-decay` is active;
+    /// persists across `--watch` reloads (it tracks the stream, not the theme).
+    novelty: Option<NoveltyModel>,
 }
 
 impl Session {
@@ -602,8 +651,9 @@ impl Session {
     }
 
     /// Emit one decoded line, honoring `--grep` (drop non-matches) and
-    /// `--highlight` (dim non-matches) before colorizing.
-    fn emit_line<W: Write>(&self, body: &str, had_nl: bool, out: &mut W) -> io::Result<()> {
+    /// `--highlight` (dim non-matches) before colorizing. When `--novelty` is
+    /// active, the colored path routes through the online novelty model.
+    fn emit_line<W: Write>(&mut self, body: &str, had_nl: bool, out: &mut W) -> io::Result<()> {
         if let Some(g) = &self.grep {
             if !g.is_match(body) {
                 return Ok(());
@@ -616,7 +666,13 @@ impl Session {
             out.write_all(body.as_bytes())?;
             out.write_all(b"\x1b[0m")?;
         } else if self.want_color {
-            out.write_all(self.colorizer.colorize_line(body).as_bytes())?;
+            // Disjoint field borrows: colorizer (shared) + novelty model (unique).
+            if let Some(model) = self.novelty.as_mut() {
+                let painted = self.colorizer.colorize_line_novelty(body, model);
+                out.write_all(painted.as_bytes())?;
+            } else {
+                out.write_all(self.colorizer.colorize_line(body).as_bytes())?;
+            }
         } else {
             out.write_all(body.as_bytes())?;
         }
