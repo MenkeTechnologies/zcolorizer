@@ -39,7 +39,7 @@ impl NoveltyModel {
         NoveltyModel::default()
     }
 
-    /// A model that ages its counts by `factor` every [`DECAY_INTERVAL`]
+    /// A model that ages its counts by `factor` every `DECAY_INTERVAL`
     /// observations. `factor` is clamped to `(0, 1]`; a value `>= 1.0` disables
     /// decay (equivalent to [`NoveltyModel::new`]).
     pub fn with_decay(factor: f32) -> NoveltyModel {
