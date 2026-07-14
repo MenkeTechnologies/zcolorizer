@@ -83,7 +83,7 @@ impl NoveltyModel {
     /// templates whose count rounds to zero (they become "first-seen" again).
     fn maybe_decay(&mut self) {
         let Some(factor) = self.decay else { return };
-        if self.total % DECAY_INTERVAL != 0 {
+        if !self.total.is_multiple_of(DECAY_INTERVAL) {
             return;
         }
         self.seen.retain(|_, v| {
@@ -109,12 +109,18 @@ mod tests {
         let mut last = 1.0;
         for _ in 0..12 {
             let s = m.observe_and_score(h);
-            assert!(s < prev, "score must strictly decrease on repeat: {s} !< {prev}");
+            assert!(
+                s < prev,
+                "score must strictly decrease on repeat: {s} !< {prev}"
+            );
             prev = s;
             last = s;
         }
         // After a dozen repeats the template is deep in "dim" territory.
-        assert!(last < 0.15, "repeated template decays toward dim, got {last}");
+        assert!(
+            last < 0.15,
+            "repeated template decays toward dim, got {last}"
+        );
     }
 
     #[test]
