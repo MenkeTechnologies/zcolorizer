@@ -53,7 +53,7 @@ cargo build --release
 zcolorizer [OPTIONS] [FILES]...
 
   -t, --theme <NAME>     Theme to use (overrides config). See --list-themes.
-  -c, --config <PATH>    Config file (default: ~/.config/zcolorizer/config.toml)
+  -c, --config <PATH>    Config file (default: <config dir>/zcolorizer/config.toml)
   -w, --watch            Reload config/theme live when the file changes
   -C, --force-color      Color even when stdout isn't a TTY (e.g. into a pager)
       --no-color         Passthrough, never color
@@ -136,7 +136,7 @@ live). Color auto-disables when piped to a non-terminal unless `--force-color`.
 ## Configuration
 
 Copy [`config.example.toml`](config.example.toml) to
-`~/.config/zcolorizer/config.toml`. Everything is optional — a one-liner is valid:
+`<config dir>/zcolorizer/config.toml` (`~/.config` on Linux, honoring `XDG_CONFIG_HOME`; `~/Library/Application Support` on macOS). Everything is optional — a one-liner is valid:
 
 ```toml
 theme = "cyberpunk"
